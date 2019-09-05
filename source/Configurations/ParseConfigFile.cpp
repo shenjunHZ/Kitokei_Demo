@@ -1,0 +1,89 @@
+#include <fstream>
+#include <iostream>
+#include "Configurations/Configurations.hpp"
+#include "ParseConfigFile.hpp"
+
+namespace
+{
+    boost::program_options::options_description createProgramOptionsDescription()
+    {
+        auto description = boost::program_options::options_description();
+        using boost::program_options::value;
+
+        description.add_options()
+            (configuration::logFilePath, value<std::string>()->default_value("./log/logFile.log"), "use for recored logs")
+            (configuration::cameraDevice, value<std::string>()->default_value("/dev/video0"), "camera device")
+            (configuration::pipeStore, value<bool>()->default_value(true), "camera capture use pipe file.")
+            (configuration::pipeFileName, value<std::string>()->default_value("cameraCapturePipe"), "camera capture pipe file name.")
+            (configuration::captureOutputDir, value<std::string>()->default_value("/tmp/cameraCapture/"), "camera capture file path.")
+            (configuration::V4l2RequestBuffersCounter, value<int>()->default_value(2), "request mmap buffer counters.")
+            (configuration::V4L2CaptureFormat, value<std::string>()->default_value("BMP"), "capture format set.");
+
+        return description;
+    }
+
+    configuration::AppConfiguration parseProgramOptionsFile(std::ifstream& boostOptionsStream)
+    {
+        namespace po = boost::program_options;
+
+        po::variables_map appConfig;
+        po::store(po::parse_config_file(boostOptionsStream, createProgramOptionsDescription()), appConfig);
+        try
+        {
+            po::notify(appConfig);
+        }
+        catch (const po::error& e)
+        {
+            std::cerr << "Parsing the config file failed: " << e.what() << std::endl;
+            throw;
+        }
+        return appConfig;
+    }
+} // namespace
+namespace configuration
+{
+    void parseProgramOptions(int argc, char** argv, AppConfiguration& cmdParams)
+    {
+        namespace po = boost::program_options;
+        {
+            po::options_description optDescr("General");
+            try
+            {
+                auto defaultConfigFilePath = po::value<std::string>()->default_value("configuration.ini");
+                optDescr.add_options()("config,c", defaultConfigFilePath, "Configuration file path")(
+                    "help,h", "Prints this help message");
+            }
+            catch (const boost::bad_lexical_cast& e)
+            {
+                std::cerr << "parseProgramOptions:lexical_cast Failed in  default_value." << std::endl;
+                std::cerr << e.what() << std::endl;
+            }
+
+            try
+            {
+                po::store(po::parse_command_line(argc, argv, optDescr), cmdParams);
+                po::notify(cmdParams);
+            }
+            catch (const po::error& e)
+            {
+                std::cerr << e.what() << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+
+            if (cmdParams.count("help") != 0u)
+            {
+                std::cout << optDescr << std::endl;
+                std::exit(EXIT_SUCCESS);
+            }
+        } // namespce po = boost::program_options
+    }
+
+    AppConfiguration loadFromIniFile(const std::string& configFilename)
+    {
+        std::ifstream configFileStream{ configFilename };
+        AppConfiguration configuration{ parseProgramOptionsFile(configFileStream) };
+
+        return configuration;
+    }
+
+}
