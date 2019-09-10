@@ -117,7 +117,7 @@ namespace Video
                 m_cameraControl->closeDevice();
                 return false;
             }
-            if (m_cameraControl->getCameraFormat(m_v4l2Format) < 0)
+            if (m_cameraControl->getCameraFrameFormat(m_v4l2Format) < 0)
             {
                 m_cameraControl->closeDevice();
                 return false;
@@ -333,13 +333,15 @@ namespace Video
         }
 
         struct v4l2_buffer v4l2Buffer;
-        for (int index = 0; index < m_V4l2RequestBuffersCounter; ++index)
-        {
-            v4l2Buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-            v4l2Buffer.memory = V4L2_MEMORY_MMAP;
-            v4l2Buffer.index = index;
-            m_cameraControl->queueBuffer(v4l2Buffer);
-        }
+        v4l2Buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        v4l2Buffer.memory = V4L2_MEMORY_MMAP;
+//         for (int index = 0; index < m_V4l2RequestBuffersCounter; ++index)
+//         {
+//             v4l2Buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+//             v4l2Buffer.memory = V4L2_MEMORY_MMAP;
+//             v4l2Buffer.index = index;
+//             m_cameraControl->queueBuffer(v4l2Buffer);
+//         }
 
         while (keep_running)
         {
@@ -347,7 +349,7 @@ namespace Video
             for (int i = 0; i < m_V4l2RequestBuffersCounter; i++)
             {
                 /* Check if the thread should stop. */
-                if (stream_finish) return;
+                //if (stream_finish) return;
 
                 if (not m_cameraControl->dequeueBuffer(v4l2Buffer))
                 {
@@ -401,7 +403,12 @@ namespace Video
             }
         }
 
-        return NULL;
+        return;
+    }
+
+    void CameraProcess::stopRun()
+    {
+        keep_running = false;
     }
 
 } // namespace Video

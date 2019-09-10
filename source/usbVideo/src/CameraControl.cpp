@@ -54,7 +54,7 @@ namespace Video
         return true;
     }
 
-    bool CameraControl::getCameraFormat(struct v4l2_format& format)
+    bool CameraControl::getCameraFrameFormat(struct v4l2_format& format)
     {
         // set the type - needed so we can get the structure
         format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -63,6 +63,19 @@ namespace Video
             LOG_ERROR_MSG("get VIDIOC_G_FMT failed: {}", m_cameraDev);
             return false;
         }
+        return true;
+    }
+
+    bool CameraControl::getCameraFrameType(struct v4l2_fmtdesc& fmtdesc)
+    {
+        fmtdesc.index = 0; // can while index ++ get all frame format
+        fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        if (ioctl(m_cameraFd, VIDIOC_ENUM_FMT, &fmtdesc) < 0)
+        {
+            LOG_DEBUG_MSG("have no support frame format.");
+            return false;
+        }
+        LOG_DEBUG_MSG("Support frame format {}.", fmtdesc.description);
         return true;
     }
 

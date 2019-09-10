@@ -14,7 +14,9 @@ namespace Video
         int openDevice() override;
         bool closeDevice() override;
         bool getCameraCapability(struct v4l2_capability& capability) override;
-        bool getCameraFormat(struct v4l2_format& format) override;
+        bool getCameraFrameFormat(struct v4l2_format& format) override;
+        bool getCameraFrameType(struct v4l2_fmtdesc&) override;
+
         bool setCameraPixFormat(uint32_t width, uint32_t height) override { return false; };
 
         int requestMmapBuffers(const struct v4l2_requestbuffers& requestBuffers) override;

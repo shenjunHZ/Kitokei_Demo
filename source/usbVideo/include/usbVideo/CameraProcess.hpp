@@ -19,6 +19,7 @@ namespace Video
         CameraProcess(Logger& logger, const configuration::AppConfiguration& config);
         ~CameraProcess();
         void runDevice();
+        static void stopRun();
 
     private:
         bool initDevice();

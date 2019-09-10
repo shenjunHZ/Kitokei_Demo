@@ -1,5 +1,7 @@
 #pragma once
-
+/*
+* use V4L2 framework get USB camera with YUV
+*/
 #include <stdint.h>
 #include <linux/videodev2.h>
 
@@ -16,7 +18,9 @@ namespace Video
         // get the camera video capability
         virtual bool getCameraCapability(struct v4l2_capability&) = 0;
         // get the camera video format
-        virtual bool getCameraFormat(struct v4l2_format&) = 0;
+        virtual bool getCameraFrameFormat(struct v4l2_format&) = 0;
+        // get frame format
+        virtual bool getCameraFrameType(struct v4l2_fmtdesc&) = 0;
 
         // set video capture format
         virtual bool setCameraPixFormat(uint32_t width, uint32_t height) = 0;
