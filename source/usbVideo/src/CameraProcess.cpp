@@ -196,14 +196,20 @@ namespace Video
             LOG_ERROR_MSG("mmap buffers failed.");
             exitProcess();
         }
+        LOG_DEBUG_MSG("Request mmap buffers {} success.", successBuffers);
 
         /* start the capture */
         m_cameraControl->startCameraStreaming(requestBuffers);
 
-        // start capture thread
-        m_captureThread = std::thread(&CameraProcess::captureCamera, this);
+        // start capture
+        //m_captureThread = std::thread(&CameraProcess::captureCamera, this);
+        if(not captureCamera())
+        {
+            LOG_DEBUG_MSG("Capture camera file failure.");
+        }
 
         // stream
+        LOG_DEBUG_MSG("Start camera streaming ...");
         streamCamera();
         exitProcess();
     }
@@ -230,7 +236,7 @@ namespace Video
 
     }
 
-    void CameraProcess::captureCamera()
+    bool CameraProcess::captureCamera()
     {
         std::vector<uint8_t> rgbBuffer;
 
@@ -247,16 +253,16 @@ namespace Video
             rgbBuffer.resize(m_v4l2Format.fmt.pix.width * m_v4l2Format.fmt.pix.height * RGBCountSize);
         }
 
-        while (keep_running)
+        //while (keep_running)
         {
             /* Wait for the start condition */
 
             /* queue one buffer and 'refresh it' */
             struct v4l2_buffer v4l2Buffer;
+            v4l2Buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+            v4l2Buffer.memory = V4L2_MEMORY_MMAP;
             for (int i = 0; i < m_V4l2RequestBuffersCounter; i++)
             {
-                v4l2Buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-                v4l2Buffer.memory = V4L2_MEMORY_MMAP;
                 v4l2Buffer.index = i;
                 m_cameraControl->queueBuffer(v4l2Buffer);
             }
@@ -268,7 +274,7 @@ namespace Video
             /* get the idx of ready buffer */
             if (!m_cameraControl->dequeueBuffer(v4l2Buffer))
             {
-                return;
+                return false;
             }
 
             switch (checkPixelFormat())
@@ -282,7 +288,7 @@ namespace Video
                 break;
             default:
                 LOG_ERROR_MSG("Unsupported pixelformat!");
-                return;
+                return false;
             }
 
             m_cameraControl->queryBuffer(v4l2Buffer);
@@ -313,10 +319,10 @@ namespace Video
                 break;
             default:
                 LOG_ERROR_MSG("Not supported format requested!");
-                break;
+                return false;
             }
 
-            return;
+            return true;
         }
     }
 
@@ -335,13 +341,11 @@ namespace Video
         struct v4l2_buffer v4l2Buffer;
         v4l2Buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         v4l2Buffer.memory = V4L2_MEMORY_MMAP;
-//         for (int index = 0; index < m_V4l2RequestBuffersCounter; ++index)
-//         {
-//             v4l2Buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-//             v4l2Buffer.memory = V4L2_MEMORY_MMAP;
-//             v4l2Buffer.index = index;
-//             m_cameraControl->queueBuffer(v4l2Buffer);
-//         }
+        for (int index = 0; index < m_V4l2RequestBuffersCounter; ++index)
+        {
+            v4l2Buffer.index = index;
+            m_cameraControl->queueBuffer(v4l2Buffer);
+        }
 
         while (keep_running)
         {

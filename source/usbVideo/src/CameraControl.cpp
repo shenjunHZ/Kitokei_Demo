@@ -131,6 +131,8 @@ namespace Video
             LOG_ERROR_MSG("mmap failed: {}", std::strerror(errno));
             return false;
         }
+        LOG_DEBUG_MSG("Buffer address: {}, length: {}.", 
+            m_imageBuffers[buffer.index].startBuffer, m_imageBuffers[buffer.index].bufferLength);
         return true;
     }
 
@@ -156,10 +158,11 @@ namespace Video
 
     bool CameraControl::queueBuffer(const struct v4l2_buffer& v4l2Buffer)
     {
-        if ( ioctl(m_cameraFd, VIDIOC_QBUF, &v4l2Buffer) < 0)
+        int rec = 0;
+        if ( (rec = ioctl(m_cameraFd, VIDIOC_QBUF, &v4l2Buffer)) < 0)
         {
-
-            LOG_ERROR_MSG("Type not supported, index out of bounds or no buffers allocate failed: {}", std::strerror(errno));
+            LOG_ERROR_MSG("Type not supported, index out of bounds or no buffers allocate failed: {}, {}", 
+                rec, std::strerror(errno));
             return false;
         }
         return true;

@@ -26,7 +26,7 @@ namespace Video
         void outputDeviceInfo();
         int checkPixelFormat();
 
-        void captureCamera();
+        bool captureCamera();
         void streamCamera();
         void exitProcess();
 
