@@ -22,9 +22,12 @@ target_link_libraries(${EXECUTABLE_NAME}
     PRIVATE
         boost_program_options
         logger
+        socket
+        timer
         usbVideo
 )
 
 add_subdirectory ("logger")
-add_subdirectory ("usbVideo")
 add_subdirectory ("socket")
+add_subdirectory ("timer")
+add_subdirectory ("usbVideo")

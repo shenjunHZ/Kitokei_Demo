@@ -1,10 +1,19 @@
 #include "AppInstance.hpp"
 #include "logger/Logger.hpp"
+#include "timer/IOService.hpp"
 
+namespace
+{
+    int testCatchTimes = 20;
+} // namespace 
 namespace application
 {
-    AppInstance::AppInstance(spdlog::logger& logger, const configuration::AppConfiguration& config)
+    AppInstance::AppInstance(spdlog::logger& logger, const configuration::AppConfiguration& config, 
+            const configuration::AppAddresses& appAddress)
         : m_cameraProcess(std::make_unique<Video::CameraProcess>(logger, config))
+        , m_ioService{ std::make_unique<timerservice::IOService>() }
+        , m_timerService{ std::make_unique<timerservice::DefaultTimerService>(*m_ioService) }
+        , m_clientReceiver{ logger, config, appAddress, *m_timerService }
     {
         initService();
     }
@@ -26,9 +35,15 @@ namespace application
     {
         if (m_cameraProcess)
         {
-            m_cameraProcessThread = std::thread(&CameraProcess::runDevice, m_cameraProcess);
+            m_cameraProcessThread = std::thread(&Video::CameraProcess::runDevice, m_cameraProcess);
+        }
+        while (testCatchTimes)
+        {
+            sleep(1);
+            --testCatchTimes;
         }
         
+        Video::CameraProcess::stopRun();
         return;
     }
 

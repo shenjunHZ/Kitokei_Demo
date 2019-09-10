@@ -14,13 +14,13 @@ std::string getLogFilePath(const configuration::AppConfiguration& config)
     return "";
 }
 
-void runApp(const configuration::AppConfiguration& configParams)
+void runApp(const configuration::AppConfiguration& configParams, const configuration::AppAddresses& address)
 {
     std::string filePath = getLogFilePath(configParams);
     auto& logger = logger::getLogger(filePath);
     LOG_INFO_MSG(logger, "Start to run app");
 
-    application::AppInstance appInstance(logger, configParams);
+    application::AppInstance appInstance(logger, configParams, address);
 
     appInstance.loopFuction();
 }
@@ -42,7 +42,8 @@ int main(int argc, char* argv[])
     try
     {
         configuration::AppConfiguration configParams = configuration::loadFromIniFile(config);
-        runApp(configParams);
+        const auto addresses = configuration::getAppAddresses(configParams);
+        runApp(configParams, addresses);
     }
     catch (const std::exception& e)
     {

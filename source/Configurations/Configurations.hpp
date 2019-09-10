@@ -5,6 +5,7 @@
 #define LOG_CONFIG_PREFIX "log"
 #define VIDEO_CONFIG_PREFIX "video"
 #define V4L2_CONFIG_PREFIX "V4L2"
+#define SOCKET_CONFIG_PREFIX "socket"
 
 namespace configuration
 {
@@ -15,6 +16,24 @@ namespace configuration
     constexpr auto captureOutputDir = VIDEO_CONFIG_PREFIX ".captureOutputDir";
     constexpr auto V4l2RequestBuffersCounter = V4L2_CONFIG_PREFIX ".V4l2RequestBuffersCounter";
     constexpr auto V4L2CaptureFormat = V4L2_CONFIG_PREFIX ".V4L2CaptureFormat";
+    constexpr auto chessBoardServerAddress = SOCKET_CONFIG_PREFIX ".chessBoardServerAddress";
+    constexpr auto chessBoardServerPort = SOCKET_CONFIG_PREFIX ".chessBoardServerPort";
+    constexpr auto kitokeiLocalAddress = SOCKET_CONFIG_PREFIX ".kitokeiLocalAddress";
+    constexpr auto kitokeiLocalPort = SOCKET_CONFIG_PREFIX ".kitokeiLocalPort";
+
+    struct AppAddresses
+    {
+        std::string chessBoardServerAddress;
+        unsigned int chessBoardServerPort;
+
+        std::string kitokeiLocalAddress;
+        unsigned int kitokeiLocalPort;
+    };
+
+    struct TcpConfiguration
+    {
+
+    };
 
     struct imageBuffer
     {

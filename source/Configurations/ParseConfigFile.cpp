@@ -17,7 +17,11 @@ namespace
             (configuration::pipeFileName, value<std::string>()->default_value("cameraCapturePipe"), "camera capture pipe file name.")
             (configuration::captureOutputDir, value<std::string>()->default_value("/tmp/cameraCapture/"), "camera capture file path.")
             (configuration::V4l2RequestBuffersCounter, value<int>()->default_value(2), "request mmap buffer counters.")
-            (configuration::V4L2CaptureFormat, value<std::string>()->default_value("BMP"), "capture format set.");
+            (configuration::V4L2CaptureFormat, value<std::string>()->default_value("BMP"), "capture format set.")
+            (configuration::chessBoardServerAddress, value<std::string>()->default_value("192.168.2.140"), "chess board server ip address.")
+            (configuration::chessBoardServerPort, value<unsigned int>()->default_value(8080), "chess board server ip port.")
+            (configuration::kitokeiLocalAddress, value<std::string>()->default_value("127.0.0.1"), "kitokei local ip address.")
+            (configuration::kitokeiLocalPort, value<unsigned int>()->default_value(8080), "kitokei local ip port.");
 
         return description;
     }
@@ -84,6 +88,14 @@ namespace configuration
         AppConfiguration configuration{ parseProgramOptionsFile(configFileStream) };
 
         return configuration;
+    }
+
+    configuration::AppAddresses getAppAddresses(const boost::program_options::variables_map& cmdParams)
+    {
+        return AppAddresses{ cmdParams[chessBoardServerAddress].as<std::string>(),
+                             cmdParams[chessBoardServerPort].as<unsigned int>(),
+                             cmdParams[kitokeiLocalAddress].as<std::string>(),
+                             cmdParams[kitokeiLocalPort].as<unsigned int>() };
     }
 
 }

@@ -11,4 +11,5 @@ namespace configuration
     void parseProgramOptions(int argc, char** argv, AppConfiguration& cmdParams);
 
     AppConfiguration loadFromIniFile(const std::string& configFilename);
+    AppAddresses getAppAddresses(const boost::program_options::variables_map& cmdParams);
 }
