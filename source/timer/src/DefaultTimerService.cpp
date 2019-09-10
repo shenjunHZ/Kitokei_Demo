@@ -2,11 +2,11 @@
 // Created by junshen on 10/4/18.
 //
 
-#include "DefaultTimerService.hpp"
 #include <boost/exception/diagnostic_information.hpp>
 #include <functional>
 #include "logger/Logger.hpp"
-#include "TimerService.hpp"
+#include "timer/DefaultTimerService.hpp"
+#include "timer/TimerService.hpp"
 
 namespace timerservice
 {

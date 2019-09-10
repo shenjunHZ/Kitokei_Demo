@@ -4,7 +4,7 @@
 #include <memory>
 #include <chrono>
 #include <functional>
-#include "timer/include/Timer.hpp"
+#include "Timer.hpp"
 
 #pragma once
 
