@@ -35,13 +35,19 @@ namespace application
     {
         if (m_cameraProcess)
         {
-            m_cameraProcessThread = std::thread(&Video::CameraProcess::runDevice, m_cameraProcess);
+            m_cameraProcessThread = std::thread([&m_cameraProcess = this->m_cameraProcess]() 
+            {
+                m_cameraProcess->runDevice();
+            });
         }
+/*******************************************/
+       // for test catch video
         while (testCatchTimes)
         {
             sleep(1);
             --testCatchTimes;
         }
+/******************************************/
         
         Video::CameraProcess::stopRun();
         return;

@@ -52,6 +52,7 @@ elseif(${ARM})
     MESSAGE(STATUS "Boost Include Path: ${Boost_INCLUDE_DIRS}")
     INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
     # lib
+    MESSAGE(STATUS "Boost Library Path: ${Boost_LIBRARY_DIRS}")
     LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 
 endif()

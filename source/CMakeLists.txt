@@ -3,6 +3,7 @@ set(SOURCES
         Configurations/ParseConfigFile.cpp
         common/CommonFunction.cpp
         Applications/AppInstance.cpp
+        Applications/ClientReceiver.cpp
 )
 
 set(HEADERS
@@ -10,6 +11,7 @@ set(HEADERS
         Configurations/ParseConfigFile.hpp
         common/CommonFunction.hpp
         Applications/AppInstance.hpp
+        Applications/ClientReceiver.hpp
 )
 
 INCLUDE_DIRECTORIES(
@@ -21,6 +23,8 @@ add_executable(${EXECUTABLE_NAME} ${SOURCES} ${HEADERS})
 target_link_libraries(${EXECUTABLE_NAME}
     PRIVATE
         boost_program_options
+        boost_filesystem
+        boost_system
         logger
         socket
         timer
