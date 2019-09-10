@@ -6,8 +6,8 @@
 #include <cstring>
 #include "socket/ClientSocket.hpp"
 #include "logger/Logger.hpp"
-#include "player/CodeConverter.hpp"
-#include "configurations/AppConfiguration.hpp"
+//#include "player/CodeConverter.hpp"
+#include "Configurations/Configurations.hpp"
 #include <boost/exception/diagnostic_information.hpp>
 
 namespace endpoints
@@ -30,7 +30,7 @@ namespace endpoints
     ClientSocket::ClientSocket(Logger& logger,
                                ISocketSysCall& sysCall,
                                configuration::TcpConfiguration& tcpConfiguration,
-                               applications::IDataListener& dataListener,
+                               endpoints::IDataListener& dataListener,
                                const configuration::AppConfiguration& config,
                                const configuration::AppAddresses& appAddress,
                                timerservice::TimerService& timerService)
@@ -38,14 +38,14 @@ namespace endpoints
     , m_tcpConfiguration{tcpConfiguration}
     , m_socketSysCall{sysCall}
     , m_logger{logger}
-    , m_endpointAddress{appAddress.serverAddress, appAddress.serverPort}
-    , m_serverAddr{createServerAdd(appAddress.serverAddress, appAddress.serverPort)}
-    , m_localAddr{createServerAdd(appAddress.clientAddress, appAddress.clientPort)}
+    , m_endpointAddress{appAddress.chessBoardServerAddress, appAddress.chessBoardServerPort }
+    , m_serverAddr{createServerAdd(appAddress.chessBoardServerAddress, appAddress.chessBoardServerPort)}
+    , m_localAddr{createServerAdd(appAddress.kitokeiLocalAddress, appAddress.kitokeiLocalPort)}
     , m_dataListener{dataListener}
     , m_timerService{timerService}
     {
         LOG_INFO_MSG(m_logger, "Createing tcp endpoint to {} : {}",
-                     appAddress.serverAddress , appAddress.serverPort);
+                     appAddress.chessBoardServerAddress, appAddress.chessBoardServerPort);
         createTcpSocket(m_localAddr);
         setTcpSocketOptions(m_socketfId, m_tcpConfiguration);
         socklen_t socketLen = sizeof(*m_localAddr.data());
@@ -286,16 +286,16 @@ namespace endpoints
         }
         if(size > 0)
         {
-            LOG_INFO_MSG(m_logger, "Received {} bytes from {} : {}", size,
-                         m_endpointAddress.ipAddress, m_endpointAddress.portNumber);
-
-            player::CodeConverter codeConverter("gb2312", "utf-8//TRANSLIT//IGNORE");
-            std::shared_ptr<char*> dataBuffer = std::make_shared<char*>(new char[size * 2 + 1]);
-            memset(*dataBuffer, 0 , size * 2 + 1);
-
-            codeConverter.decodeCoverter(reinterpret_cast<char*>(receiveDataBuffer.data()), reinterpret_cast<size_t>(size),
-                                         *dataBuffer, reinterpret_cast<size_t>(size * 2 + 1));
-            m_dataListener.onDataMessage(*dataBuffer); // to do gsl
+//             LOG_INFO_MSG(m_logger, "Received {} bytes from {} : {}", size,
+//                          m_endpointAddress.ipAddress, m_endpointAddress.portNumber);
+// 
+//             player::CodeConverter codeConverter("gb2312", "utf-8//TRANSLIT//IGNORE");
+//             std::shared_ptr<char*> dataBuffer = std::make_shared<char*>(new char[size * 2 + 1]);
+//             memset(*dataBuffer, 0 , size * 2 + 1);
+// 
+//             codeConverter.decodeCoverter(reinterpret_cast<char*>(receiveDataBuffer.data()), reinterpret_cast<size_t>(size),
+//                                          *dataBuffer, reinterpret_cast<size_t>(size * 2 + 1));
+//             m_dataListener.onDataMessage(*dataBuffer); // to do gsl
         }
         else
         {

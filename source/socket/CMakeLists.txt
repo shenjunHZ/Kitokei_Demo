@@ -15,6 +15,11 @@ set(HEADERS
         include/socket/ClientSocket.hpp
     )
 
+MESSAGE(STATUS ${CMAKE_CURRENT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+)
+
 # create lib
 add_library(${MODULE_NAME} STATIC ${SOURCES} ${HEADERS})
 
@@ -29,4 +34,5 @@ target_include_directories(socket
 target_link_libraries(${MODULE_NAME}
     PRIVATE
         logger
+        timer
     )

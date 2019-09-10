@@ -5,7 +5,7 @@
 #pragma once
 #include <string>
 
-namespace applications
+namespace endpoints
 {
     class IDataListener
     {

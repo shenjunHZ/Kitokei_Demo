@@ -9,14 +9,13 @@
 #include <stdexcept>
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/detail/endpoint.hpp>
-
 #include "logger/LoggerFwd.hpp"
 #include "socket/ISocketSysCall.hpp"
-#include "configurations/AppConfiguration.hpp"
+#include "Configurations/Configurations.hpp"
+#include "Configurations/ParseConfigFile.hpp"
 #include "IDataListener.hpp"
-#include "TimerService.hpp"
-#include "configurations/ConfigurationLoader.hpp"
-#include "Timer.hpp"
+#include "timer/TimerService.hpp"
+#include "timer/Timer.hpp"
 
 namespace endpoints
 {
@@ -30,7 +29,7 @@ namespace endpoints
                 Logger& logger,
                 ISocketSysCall& sysCall,
                 configuration::TcpConfiguration& tcpConfiguration,
-                applications::IDataListener& dataListener,
+                endpoints::IDataListener& dataListener,
                 const configuration::AppConfiguration& config,
                 const configuration::AppAddresses& appAddress,
                 timerservice::TimerService& timerService);
@@ -74,7 +73,7 @@ namespace endpoints
         tcpEndpointAddress m_endpointAddress;
         IpEndpoint m_serverAddr;
         IpEndpoint m_localAddr;
-        applications::IDataListener& m_dataListener;
+        endpoints::IDataListener& m_dataListener;
         timerservice::TimerService& m_timerService;
         std::unique_ptr<timerservice::Timer> m_concreteTimer;
     };
