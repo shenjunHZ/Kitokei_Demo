@@ -37,7 +37,7 @@ namespace Video
 
         std::thread m_captureThread;
 
-        bool m_bPipe{true};
+        bool m_enableCameraStream{true};
         bool m_bSharedMem{false};
         std::string m_pipeName{"videoCapturePipe"};
         std::string m_outputDir{"/tmp/videoCapture/"};

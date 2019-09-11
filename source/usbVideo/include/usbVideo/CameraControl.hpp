@@ -22,9 +22,9 @@ namespace Video
         int requestMmapBuffers(const struct v4l2_requestbuffers& requestBuffers) override;
         bool startCameraStreaming(const struct v4l2_requestbuffers& requestBuffers) override;
 
-        bool queueBuffer(const struct v4l2_buffer&) override;
-        bool dequeueBuffer(const struct v4l2_buffer&) override;
-        bool queryBuffer(const struct v4l2_buffer&) override;
+        bool queueBuffer(const struct v4l2_buffer& v4l2Buffer) override;
+        bool dequeueBuffer(struct v4l2_buffer& v4l2Buffer) override;
+        bool queryBuffer(const struct v4l2_buffer& v4l2Buffer) override;
 
         bool endCameraStreaming(const int& videoType) override;
         bool unMapBuffers() override;
@@ -33,7 +33,7 @@ namespace Video
             const int& reqWidth, const int& reqHeight);
 
     private:
-        bool queryMapBuffer(struct v4l2_buffer& buffer);
+        bool queryMapBuffer(const struct v4l2_buffer& buffer);
 
     private:
         int m_cameraFd{-1};

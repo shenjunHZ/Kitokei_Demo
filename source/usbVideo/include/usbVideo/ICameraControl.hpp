@@ -33,7 +33,7 @@ namespace Video
         // v4l2 buffer queue
         virtual bool queueBuffer(const struct v4l2_buffer&) = 0;
         // v4l2 buffer dequeue
-        virtual bool dequeueBuffer(const struct v4l2_buffer&) = 0;
+        virtual bool dequeueBuffer(struct v4l2_buffer&) = 0;
         // v4l2 query timestamp
         virtual bool queryBuffer(const struct v4l2_buffer&) = 0;
 

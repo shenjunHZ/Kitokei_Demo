@@ -113,7 +113,7 @@ namespace Video
         return totalBuffers;
     }
 
-    bool CameraControl::queryMapBuffer(struct v4l2_buffer& buffer)
+    bool CameraControl::queryMapBuffer(const struct v4l2_buffer& buffer)
     {
         if ( ioctl(m_cameraFd, VIDIOC_QUERYBUF, &buffer) < 0)
         {
@@ -158,17 +158,15 @@ namespace Video
 
     bool CameraControl::queueBuffer(const struct v4l2_buffer& v4l2Buffer)
     {
-        int rec = 0;
-        if ( (rec = ioctl(m_cameraFd, VIDIOC_QBUF, &v4l2Buffer)) < 0)
+        if ( ioctl(m_cameraFd, VIDIOC_QBUF, &v4l2Buffer) < 0)
         {
-            LOG_ERROR_MSG("Type not supported, index out of bounds or no buffers allocate failed: {}, {}", 
-                rec, std::strerror(errno));
+            LOG_ERROR_MSG("Type not supported, index out of bounds or no buffers allocate failed: {}", std::strerror(errno));
             return false;
         }
         return true;
     }
 
-    bool CameraControl::dequeueBuffer(const struct v4l2_buffer& v4l2Buffer)
+    bool CameraControl::dequeueBuffer(struct v4l2_buffer& v4l2Buffer)
     {
         if (ioctl(m_cameraFd, VIDIOC_DQBUF, &v4l2Buffer) < 0)
         {

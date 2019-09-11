@@ -22,11 +22,11 @@ namespace
         return "/dev/video0";
     }
 
-    bool getPipeStoreFlag(const configuration::AppConfiguration& config)
+    bool getEnableCameraStream(const configuration::AppConfiguration& config)
     {
-        if (config.find(configuration::pipeStore) != config.end())
+        if (config.find(configuration::enableCameraStream) != config.end())
         {
-            return config[configuration::pipeStore].as<bool>();
+            return config[configuration::enableCameraStream].as<bool>();
         }
         return true;
     }
@@ -85,7 +85,7 @@ namespace Video
     std::atomic_bool keep_running{ true };
 
     CameraProcess::CameraProcess(Logger& logger, const configuration::AppConfiguration& config)
-        : m_bPipe{ getPipeStoreFlag(config) }
+        : m_enableCameraStream{ getEnableCameraStream(config) }
         , m_pipeName{ getPipeFileName(config) }
         , m_outputDir{ getCaptureOutputDir(config) }
         , m_V4l2RequestBuffersCounter{ getV4l2RequestBuffersCounter(config) }
@@ -161,7 +161,7 @@ namespace Video
         }
         outputDeviceInfo();
 
-        if (m_bPipe && !m_pipeName.empty() && !m_outputDir.empty())
+        if (m_enableCameraStream && !m_pipeName.empty() && !m_outputDir.empty())
         {
             std::string pipeFile = m_outputDir + m_pipeName;
             if (not common::isFileExistent(pipeFile))
@@ -203,37 +203,18 @@ namespace Video
 
         // start capture
         //m_captureThread = std::thread(&CameraProcess::captureCamera, this);
-        if(not captureCamera())
+        if (m_enableCameraStream)
+        {
+            // stream
+            LOG_DEBUG_MSG("Start camera streaming ...");
+            streamCamera();
+        }
+        else if(not captureCamera())
         {
             LOG_DEBUG_MSG("Capture camera file failure.");
         }
 
-        // stream
-        LOG_DEBUG_MSG("Start camera streaming ...");
-        streamCamera();
         exitProcess();
-    }
-
-    void CameraProcess::exitProcess()
-    {
-        LOG_DEBUG_MSG("camshot ending.");
-
-        /* Clean up */
-        if (m_captureThread.joinable())
-        {
-            m_captureThread.join();
-        }
-        int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        m_cameraControl->endCameraStreaming(type);
-
-        m_cameraControl->unMapBuffers();
-        m_cameraControl->closeDevice();
-
-        if (m_bSharedMem)
-        {
-
-        }
-
     }
 
     bool CameraProcess::captureCamera()
@@ -244,99 +225,81 @@ namespace Video
         char cur_name[64];
         struct timeval timestamp;
 
-        if (m_bSharedMem)
+        rgbBuffer.resize(m_v4l2Format.fmt.pix.width * m_v4l2Format.fmt.pix.height * RGBCountSize);
+        /* Wait for the start condition */
+
+        /* queue one buffer and 'refresh it' */
+        struct v4l2_buffer v4l2Buffer;
+        v4l2Buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        v4l2Buffer.memory = V4L2_MEMORY_MMAP;
+        for (int i = 0; i < m_V4l2RequestBuffersCounter; i++)
         {
-           // rgb_buffer = p_shm;
+            v4l2Buffer.index = i;
+            m_cameraControl->queueBuffer(v4l2Buffer);
         }
-        else
+        for (int i = 0; i < m_V4l2RequestBuffersCounter - 1; i++)
         {
-            rgbBuffer.resize(m_v4l2Format.fmt.pix.width * m_v4l2Format.fmt.pix.height * RGBCountSize);
+            m_cameraControl->dequeueBuffer(v4l2Buffer);
         }
 
-        //while (keep_running)
+        /* get the idx of ready buffer */
+        if (!m_cameraControl->dequeueBuffer(v4l2Buffer))
         {
-            /* Wait for the start condition */
-
-            /* queue one buffer and 'refresh it' */
-            struct v4l2_buffer v4l2Buffer;
-            v4l2Buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-            v4l2Buffer.memory = V4L2_MEMORY_MMAP;
-            for (int i = 0; i < m_V4l2RequestBuffersCounter; i++)
-            {
-                v4l2Buffer.index = i;
-                m_cameraControl->queueBuffer(v4l2Buffer);
-            }
-            for (int i = 0; i < m_V4l2RequestBuffersCounter - 1; i++)
-            {
-                m_cameraControl->dequeueBuffer(v4l2Buffer);
-            }
-
-            /* get the idx of ready buffer */
-            if (!m_cameraControl->dequeueBuffer(v4l2Buffer))
-            {
-                return false;
-            }
-
-            switch (checkPixelFormat())
-            {
-            case V4L2_PIX_FMT_YUYV:
-                /* convert data to rgb */
-                if ( m_cameraControl->getRGBBuffer(rgbBuffer, v4l2Buffer, m_v4l2Format.fmt.pix.width, m_v4l2Format.fmt.pix.height) )
-                {
-                    LOG_DEBUG_MSG("Converted to rgb.");
-                }
-                break;
-            default:
-                LOG_ERROR_MSG("Unsupported pixelformat!");
-                return false;
-            }
-
-            m_cameraControl->queryBuffer(v4l2Buffer);
-
-            /* make the image */
-
-            /* create the file name */
-            std::string fileName = m_outputDir;
-            {
-                std::stringstream strStream;
-                strStream << v4l2Buffer.timestamp.tv_sec;
-                fileName += "camshot_" + strStream.str() + ".bmp";
-            }
-
-            switch (m_captureFormat)
-            {
-            case configuration::captureFormat::CAPTURE_FORMAT_BMP:
-                makeCaptureBMP(&rgbBuffer[0],
-                    fileName,
-                    m_v4l2Format.fmt.pix.width,
-                    m_v4l2Format.fmt.pix.height);
-                break;
-            case configuration::captureFormat::CAPTURE_FORMAT_RGB:
-                makeCaptureRGB(&rgbBuffer[0],
-                    fileName,
-                    m_v4l2Format.fmt.pix.width,
-                    m_v4l2Format.fmt.pix.height);
-                break;
-            default:
-                LOG_ERROR_MSG("Not supported format requested!");
-                return false;
-            }
-
-            return true;
+            return false;
         }
+
+        switch (checkPixelFormat())
+        {
+        case V4L2_PIX_FMT_YUYV:
+            /* convert data to rgb */
+            if ( m_cameraControl->getRGBBuffer(rgbBuffer, v4l2Buffer, m_v4l2Format.fmt.pix.width, m_v4l2Format.fmt.pix.height) )
+            {
+                LOG_DEBUG_MSG("Converted to rgb.");
+            }
+            break;
+        default:
+            LOG_ERROR_MSG("Unsupported pixelformat!");
+            return false;
+        }
+
+        //m_cameraControl->queryBuffer(v4l2Buffer);
+
+        /* make the image */
+
+        /* create the file name */
+        std::string fileName = m_outputDir;
+        {
+            std::stringstream strStream;
+            strStream << v4l2Buffer.timestamp.tv_sec;
+            fileName += "camshot_" + strStream.str() + ".bmp";
+        }
+
+        switch (m_captureFormat)
+        {
+        case configuration::captureFormat::CAPTURE_FORMAT_BMP:
+            makeCaptureBMP(&rgbBuffer[0],
+                fileName,
+                m_v4l2Format.fmt.pix.width,
+                m_v4l2Format.fmt.pix.height);
+            break;
+        case configuration::captureFormat::CAPTURE_FORMAT_RGB:
+            makeCaptureRGB(&rgbBuffer[0],
+                fileName,
+                m_v4l2Format.fmt.pix.width,
+                m_v4l2Format.fmt.pix.height);
+            break;
+        default:
+            LOG_ERROR_MSG("Not supported format requested!");
+            return false;
+        }
+
+        return true;
     }
 
     void CameraProcess::streamCamera()
     {
         std::vector<uint8_t> rgbBuffer;
-        if (m_bSharedMem)
-        {
-            
-        }
-        else
-        {
-            rgbBuffer.resize(m_v4l2Format.fmt.pix.width * m_v4l2Format.fmt.pix.height * RGBCountSize);
-        }
+        rgbBuffer.resize(m_v4l2Format.fmt.pix.width * m_v4l2Format.fmt.pix.height * RGBCountSize);
 
         struct v4l2_buffer v4l2Buffer;
         v4l2Buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -357,6 +320,7 @@ namespace Video
 
                 if (not m_cameraControl->dequeueBuffer(v4l2Buffer))
                 {
+                    m_cameraControl->queueBuffer(v4l2Buffer);
                     continue;
                 }
                 //LOG_DEBUG_MSG("Request dequeue buffer {} ready.", v4l2Buffer.index);
@@ -378,11 +342,7 @@ namespace Video
                 /* make the image */
 
                 /* create the file name */
-                std::string fileName = "";
-                if (m_bPipe)
-                {
-                    fileName = m_outputDir + m_pipeName;
-                }
+                std::string fileName = m_outputDir + m_pipeName;
 
                 switch (m_captureFormat)
                 {
@@ -406,8 +366,28 @@ namespace Video
                 m_cameraControl->queueBuffer(v4l2Buffer);
             }
         }
+    }
 
-        return;
+    void CameraProcess::exitProcess()
+    {
+        LOG_DEBUG_MSG("camshot ending.");
+
+        /* Clean up */
+        if (m_captureThread.joinable())
+        {
+            m_captureThread.join();
+        }
+        int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        m_cameraControl->endCameraStreaming(type);
+
+        m_cameraControl->unMapBuffers();
+        m_cameraControl->closeDevice();
+
+        if (m_bSharedMem)
+        {
+
+        }
+
     }
 
     void CameraProcess::stopRun()
