@@ -4,7 +4,7 @@
 
 namespace
 {
-    int testCatchTimes = 20;
+    int testCatchTimes = 10;
 } // namespace 
 namespace application
 {

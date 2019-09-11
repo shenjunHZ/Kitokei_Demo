@@ -11,7 +11,7 @@ namespace configuration
 {
     constexpr auto logFilePath = LOG_CONFIG_PREFIX ".logFilePath";
     constexpr auto cameraDevice = VIDEO_CONFIG_PREFIX ".cameraDevice";
-    constexpr auto pipeStore = VIDEO_CONFIG_PREFIX ".pipeStore";
+    constexpr auto enableCameraStream = VIDEO_CONFIG_PREFIX ".enableCameraStream";
     constexpr auto pipeFileName = VIDEO_CONFIG_PREFIX ".pipeFileName";
     constexpr auto captureOutputDir = VIDEO_CONFIG_PREFIX ".captureOutputDir";
     constexpr auto V4l2RequestBuffersCounter = V4L2_CONFIG_PREFIX ".V4l2RequestBuffersCounter";

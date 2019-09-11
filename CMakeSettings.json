@@ -1,7 +1,7 @@
 ﻿{
     "configurations": [
         {
-            "name": "Linux-Release",
+            "name": "linux-release",
             "generator": "Unix Makefiles",
             "configurationType": "RelWithDebInfo",
             "variables": [
@@ -21,13 +21,13 @@
             //"remoteMachineName": "192.168.2.140",
             //"remoteMachineName": "hzlinb107.china.nsn-net.net",
             "remoteMachineName": "ipqwcwt.eicp.net",
-            "remoteCMakeListsRoot": "/home/junshen/development/remoteBuildRoot//Kitokei_Demo/${name}",
+            "remoteCMakeListsRoot": "/home/junshen/development/remoteBuildRoot/Kitokei_Demo/${name}",
             //"remoteCMakeListsRoot": "/var/fpwork/junshen/remoteBuildRoot/Kitokei_Demo/${name}",
             "cmakeExecutable": "/usr/bin/cmake",
             //"cmakeExecutable": "/opt/cmake/x86_64/3.12.3/bin-wrapped/cmake",
-            "remoteBuildRoot": "/home/junshen/development/remoteBuildRoot//Kitokei_Demo/build/${name}",
+            "remoteBuildRoot": "/home/junshen/development/remoteBuildRoot/Kitokei_Demo/build/${name}",
             //"remoteBuildRoot": "/var/fpwork/junshen/remoteBuildRoot/Kitokei_Demo/build/${name}",
-            "remoteInstallRoot": "/home/junshen/development/remoteBuildRoot//Kitokei_Demo/install/${name}",
+            "remoteInstallRoot": "/home/junshen/development/remoteBuildRoot/Kitokei_Demo/install/${name}",
             //"remoteInstallRoot": "/var/fpwork/junshen/remoteBuildRoot/Kitokei_Demo/install/${name}",
             "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\Kitokei_Demo\\build\\${name}",
             "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\Kitokei_Demo\\install\\${name}",
