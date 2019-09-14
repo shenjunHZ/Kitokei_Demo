@@ -5,7 +5,7 @@
 #include "usbVideo/CameraImage.hpp"
 #include "logger/Logger.hpp"
 
-namespace Video
+namespace usbVideo
 {
     CameraControl::CameraControl(const std::string& cameraDev)
         : m_cameraDev{std::move(cameraDev)}
@@ -23,7 +23,7 @@ namespace Video
 
     int CameraControl::openDevice()
     {
-        if ( (m_cameraFd = open(m_cameraDev.c_str(), O_RDWR)) < 0)
+        if ( (m_cameraFd = open(m_cameraDev.c_str(), O_RDWR | O_NONBLOCK)) < 0)
         {
             LOG_ERROR_MSG("Open camera {} failed: {}", m_cameraDev, std::strerror(errno));
         }
@@ -49,6 +49,17 @@ namespace Video
         if ( -1 == ioctl(m_cameraFd, VIDIOC_QUERYCAP, &capability) )
         {
             LOG_ERROR_MSG("get VIDIOC_QUERYCAP failed: {}", m_cameraDev);
+            return false;
+        }
+        if (not (capability.capabilities & V4L2_CAP_VIDEO_CAPTURE))
+        {
+            LOG_ERROR_MSG("{} is no video capture device.", m_cameraDev);
+            return false;
+        }
+        // use for MMAP method
+        if (not (capability.capabilities & V4L2_CAP_STREAMING))
+        {
+            LOG_ERROR_MSG("{} does not support streaming i/o .", m_cameraDev);
             return false;
         }
         return true;

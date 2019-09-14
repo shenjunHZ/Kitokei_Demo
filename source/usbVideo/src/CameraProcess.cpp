@@ -31,24 +31,6 @@ namespace
         return true;
     }
 
-    std::string getPipeFileName(const configuration::AppConfiguration& config)
-    {
-        if (config.find(configuration::pipeFileName) != config.end())
-        {
-            return config[configuration::pipeFileName].as<std::string>();
-        }
-        return "cameraCapturePipe";
-    }
-
-    std::string getCaptureOutputDir(const configuration::AppConfiguration& config)
-    {
-        if (config.find(configuration::captureOutputDir) != config.end())
-        {
-            return config[configuration::captureOutputDir].as<std::string>();
-        }
-        return "/tmp/cameraCapture/";
-    }
-
     int getV4l2RequestBuffersCounter(const configuration::AppConfiguration& config)
     {
         if (config.find(configuration::V4l2RequestBuffersCounter) != config.end())
@@ -79,15 +61,15 @@ namespace
 
 } // namespace
 
-namespace Video
+namespace usbVideo
 {
     constexpr int PipeFileRight = 0666;
     std::atomic_bool keep_running{ true };
 
     CameraProcess::CameraProcess(Logger& logger, const configuration::AppConfiguration& config)
         : m_enableCameraStream{ getEnableCameraStream(config) }
-        , m_pipeName{ getPipeFileName(config) }
-        , m_outputDir{ getCaptureOutputDir(config) }
+        , m_pipeName{ common::getPipeFileName(config) }
+        , m_outputDir{ common::getCaptureOutputDir(config) }
         , m_V4l2RequestBuffersCounter{ getV4l2RequestBuffersCounter(config) }
         , m_captureFormat{ covertV4L2CaptureFormat(getV4L2CaptureFormat(config)) }
         , m_logger{logger}
@@ -178,9 +160,9 @@ namespace Video
                 LOG_DEBUG_MSG("Pipe file have exist {}.", pipeFile);
             }
         }
-        else
+        else if(m_outputDir.empty())
         {
-            LOG_ERROR_MSG("pipe config false or name is empty.");
+            LOG_ERROR_MSG("output directory is empty.");
             m_cameraControl->closeDevice();
             return;
         }
@@ -343,25 +325,10 @@ namespace Video
 
                 /* create the file name */
                 std::string fileName = m_outputDir + m_pipeName;
-
-                switch (m_captureFormat)
-                {
-                case configuration::captureFormat::CAPTURE_FORMAT_BMP:
-                    makeCaptureBMP(&rgbBuffer[0],
-                        fileName,
-                        m_v4l2Format.fmt.pix.width,
-                        m_v4l2Format.fmt.pix.height);
-                    break;
-                case configuration::captureFormat::CAPTURE_FORMAT_RGB:
-                    makeCaptureRGB(&rgbBuffer[0],
-                        fileName,
-                        m_v4l2Format.fmt.pix.width,
-                        m_v4l2Format.fmt.pix.height);
-                    break;
-                default:
-                    LOG_ERROR_MSG("Not supported format requested!");
-                    break;
-                }
+                makeCaptureRGB(&rgbBuffer[0],
+                    fileName,
+                    m_v4l2Format.fmt.pix.width,
+                    m_v4l2Format.fmt.pix.height);
 
                 m_cameraControl->queueBuffer(v4l2Buffer);
             }

@@ -12,7 +12,6 @@
 #include <mutex>
 #include <unordered_map>
 #include "TimerService.hpp"
-#include "Timer.hpp"
 #include "TimerIdGenerator.hpp"
 
 namespace timerservice

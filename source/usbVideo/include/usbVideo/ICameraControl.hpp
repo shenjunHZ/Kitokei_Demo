@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <linux/videodev2.h>
 
-namespace Video
+namespace usbVideo
 {
     class ICameraControl
     {

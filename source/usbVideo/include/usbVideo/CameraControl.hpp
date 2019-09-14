@@ -4,7 +4,7 @@
 #include "ICameraControl.hpp"
 #include "Configurations/Configurations.hpp"
 
-namespace Video
+namespace usbVideo
 {
     class CameraControl final : public ICameraControl
     {

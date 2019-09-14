@@ -20,7 +20,7 @@ void swap(T& a, T& b)
 }
 } // namespace
 
-namespace Video
+namespace usbVideo
 {
     /* Copyright 2007 (c) Logitech. All Rights Reserved. (yuv -> rgb conversion) */
     int convertYuvToRgbPixel(int y, int u, int v)
@@ -164,33 +164,38 @@ namespace Video
 
         if (fwrite(&bmpfile_magic, sizeof(configuration::BMPfileMagic), 1, fd) < 1)
         {
-            goto ERROR;
+            LOG_ERROR_MSG("Error writing to the file.");
+            fclose(fd);
+            return -1;
         }
 
         if (fwrite(&bmpfile_header, sizeof(configuration::BMPfileHeader), 1, fd) < 1)
         {
-            goto ERROR;
+            LOG_ERROR_MSG("Error writing to the file.");
+            fclose(fd);
+            return -1;
         }
 
         if (fwrite(&bmpdib_header, sizeof(configuration::BMPdibV3Heade), 1, fd) < 1)
         {
-            goto ERROR;
+            LOG_ERROR_MSG("Error writing to the file.");
+            fclose(fd);
+            return -1;
         }
 
         if (fwrite(rgb_buffer, 1, data_size, fd) < data_size)
-            goto ERROR;
+        {
+            LOG_ERROR_MSG("Error writing to the file.");
+            fclose(fd);
+            return -1;
+        }
 
         fclose(fd);
         return 0;
-
-    ERROR:
-        fprintf(stderr, "Error writing to the file.\n");
-        fclose(fd);
-        return -1;
     }
 
     int makeCaptureRGB(uint8_t *rgb_buffer,
-        const std::string& file_name,
+        const std::string& fileName,
         const uint32_t& width,
         const uint32_t& height)
     {
@@ -198,7 +203,7 @@ namespace Video
         size_t data_size;
 
         /* create the file first */
-        fd = fopen(file_name.c_str(), "wb");
+        fd = fopen(fileName.c_str(), "wb");
 
         if (fd == nullptr)
         {
@@ -210,7 +215,7 @@ namespace Video
 
         if (fwrite(rgb_buffer, 1, data_size, fd) < data_size)
         {
-            fprintf(stderr, "Error writing the %s file.\n", file_name.c_str());
+            LOG_ERROR_MSG("Error writing the {} file.", fileName.c_str());
             return -1;
         }
 

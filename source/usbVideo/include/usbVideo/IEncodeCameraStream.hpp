@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 namespace usbVideo
 {
@@ -6,15 +7,19 @@ namespace usbVideo
     {
     public:
         virtual ~IEncodeCameraStream() = default;
-        // register
-        virtual void avRegisterAll() = 0;
-        // context
-        virtual bool avFormatAllocContext(AVFormatContext&) = 0;
-        // get format
-        virtual bool avGuessFormat(std::string& filePath, AVOutputFormat&) = 0;
-        // open file
-        virtual bool avIoOpen() = 0;
-        // create stream
-        virtual bool avFormatNewStream(AVFormatContext&, AVStream&) = 0;
+        // init av register
+        virtual bool initRegister(const std::string& inputFile) = 0;
+        // prepare context
+        virtual bool prepareOutputContext(const std::string& outputFile) = 0;
+        // run write output file
+        virtual void runWriteFile() = 0;
+        // stop write output file
+        virtual void stopWriteFile() = 0;
+        // create encoder
+        virtual bool createEncoder() = 0;
+        // open encoder
+        virtual bool openEncoder() = 0;
+        // close encoder
+        virtual void closeEncoder() = 0;
     };
 } // namespace usbVideo

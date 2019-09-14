@@ -1,6 +1,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/system/error_code.hpp>
 #include "CommonFunction.hpp"
+#include "Configurations/Configurations.hpp"
 
 namespace common
 {
@@ -25,6 +26,24 @@ namespace common
         }
 
         return true;
+    }
+
+    std::string getCaptureOutputDir(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::captureOutputDir) != config.end())
+        {
+            return config[configuration::captureOutputDir].as<std::string>();
+        }
+        return "/tmp/cameraCapture/";
+    }
+
+    std::string getPipeFileName(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::pipeFileName) != config.end())
+        {
+            return config[configuration::pipeFileName].as<std::string>();
+        }
+        return "cameraCapturePipe";
     }
 
 } // namespace common

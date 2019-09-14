@@ -3,18 +3,23 @@
 #include <memory>
 #include "ClientReceiver.hpp"
 #include "Configurations/ParseConfigFile.hpp"
-#include "timer/DefaultTimerService.hpp"
 #include "usbVideo/CameraProcess.hpp"
 
 namespace spdlog
 {
-    class logger; // NOLINT
+    class logger;
 } // namespace spdlog
 
 namespace timerservice
 {
     class IOService;
+    class TimerService;
 } // namespace timerservice
+
+namespace usbVideo
+{
+    class IVideoManagement;
+}
 
 namespace application
 {
@@ -34,8 +39,10 @@ namespace application
         ClientReceiver m_clientReceiver;
 
         std::thread m_cameraProcessThread;
-        std::unique_ptr<Video::CameraProcess> m_cameraProcess;
+        std::thread m_videoManagementThread;
+        std::unique_ptr<usbVideo::CameraProcess> m_cameraProcess{};
+        std::unique_ptr<usbVideo::IVideoManagement> m_videoManagement;
         std::unique_ptr<timerservice::IOService> m_ioService;
-        std::unique_ptr<timerservice::TimerService> m_timerService;
+        std::unique_ptr<timerservice::TimerService> m_timerService{};
     };
 } // namespace application

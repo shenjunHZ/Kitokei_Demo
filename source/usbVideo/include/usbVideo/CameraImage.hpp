@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace Video
+namespace usbVideo
 {
     int convertYuvToRgbPixel(int y, int u, int v);
 
@@ -15,7 +15,7 @@ namespace Video
         const uint32_t& height);
 
     int makeCaptureRGB(uint8_t *rgb_buffer,
-        const std::string& file_name,
+        const std::string& fileName,
         const uint32_t& width,
         const uint32_t& height);
 } // namespace Video

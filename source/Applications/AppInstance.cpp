@@ -1,19 +1,23 @@
 #include "AppInstance.hpp"
 #include "logger/Logger.hpp"
 #include "timer/IOService.hpp"
+#include "timer/DefaultTimerService.hpp"
+#include "usbVideo/CameraProcess.hpp"
+#include "usbVideo/VideoManagement.hpp"
 
 namespace
 {
-    int testCatchTimes = 10;
+    std::atomic_bool keep_running{ true };
 } // namespace 
 namespace application
 {
     AppInstance::AppInstance(spdlog::logger& logger, const configuration::AppConfiguration& config, 
             const configuration::AppAddresses& appAddress)
-        : m_cameraProcess(std::make_unique<Video::CameraProcess>(logger, config))
-        , m_ioService{ std::make_unique<timerservice::IOService>() }
+        : m_ioService{ std::make_unique<timerservice::IOService>() }
         , m_timerService{ std::make_unique<timerservice::DefaultTimerService>(*m_ioService) }
         , m_clientReceiver{ logger, config, appAddress, *m_timerService }
+        , m_cameraProcess{ std::make_unique<usbVideo::CameraProcess>(logger, config) }
+        , m_videoManagement{ std::make_unique<usbVideo::VideoManagement>(logger, config, *m_timerService) }
     {
         initService();
     }
@@ -42,14 +46,13 @@ namespace application
         }
 /*******************************************/
        // for test catch video
-        while (testCatchTimes)
+        while (keep_running)
         {
-            sleep(1);
-            --testCatchTimes;
+            sleep(1000);
         }
 /******************************************/
         
-        Video::CameraProcess::stopRun();
+        usbVideo::CameraProcess::stopRun();
         return;
     }
 

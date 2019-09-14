@@ -19,13 +19,13 @@ namespace usbVideo
         virtual bool findStreamInfo(AVFormatContext&) = 0;
         /*
          * Print detailed information about the input or output format, such as
-?        * duration, bitrate, streams, container, programs, metadata, side data,
-?        * codec and time base.
-?        *
-?        * @param ic ? ? ? ?the context to analyze
-?        * @param index ? ? index of the stream to dump information about
-?        * @param url ? ? ? the URL to print, such as source or destination file
-?        * @param is_output Select whether the specified context is an input(0) or output(1)
+         * duration, bitrate, streams, container, programs, metadata, side data,
+         * codec and time base.
+         *
+         * @param ic ? ? ? ?the context to analyze
+         * @param index ? ? index of the stream to dump information about
+         * @param url ? ? ? the URL to print, such as source or destination file
+         * @param is_output Select whether the specified context is an input(0) or output(1)
          *
          * What this function does: av_dump_format() is a hand-debuting function that lets you see 
          * what's in pformatctx-> streams.Generally next we use the av_find_stream_info() function, 

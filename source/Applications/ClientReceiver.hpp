@@ -1,7 +1,6 @@
 //
 // Created by junshen on 9/30/18.
 //
-
 #pragma once
 #include <condition_variable>
 #include <mutex>

@@ -6,7 +6,7 @@
 #include "Configurations/ParseConfigFile.hpp"
 #include "logger/Logger.hpp"
 
-namespace Video
+namespace usbVideo
 {
     using v4l2Capability = struct v4l2_capability;
     using v4l2Format = struct v4l2_format;

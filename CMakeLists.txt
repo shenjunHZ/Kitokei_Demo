@@ -42,6 +42,11 @@ if(${NSN_LINUX})
 elseif(${ARM})
     INCLUDE_DIRECTORIES(
         "/home/junshen/tools/spdlog-1.x/include"
+        "/usr/ffmpeg-rkmp/include"
+    )
+
+    LINK_DIRECTORIES(
+        "/usr/ffmpeg-rkmp/lib"
     )
 
     set(Boost_MIN_VERSION "1.58.0")
