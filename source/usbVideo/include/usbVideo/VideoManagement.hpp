@@ -31,12 +31,12 @@ namespace usbVideo
         void onTimeout() override;
 
     private:
-        std::thread streamThread;
-        std::unique_ptr<StreamProcess> m_streamProcess;
-        std::unique_ptr<timerservice::Timer> m_timer;
-        std::unique_ptr<TimeStamp> m_timeStamp;
-
         Logger& m_logger;
         const configuration::AppConfiguration& m_config;
+        std::unique_ptr<StreamProcess> m_streamProcess;
+        std::unique_ptr<TimeStamp> m_timeStamp;
+
+        std::thread streamThread;
+        std::unique_ptr<timerservice::Timer> m_timer;
     };
 } // namespace usbVideo

@@ -20,9 +20,16 @@ void runApp(const configuration::AppConfiguration& configParams, const configura
     auto& logger = logger::getLogger(filePath);
     LOG_INFO_MSG(logger, "Start to run app");
 
-    application::AppInstance appInstance(logger, configParams, address);
+    try 
+    {
+        application::AppInstance appInstance(logger, configParams, address);
 
-    appInstance.loopFuction();
+        appInstance.loopFuction();
+    }
+    catch (const std::exception& e)
+    {
+        LOG_ERROR_MSG("app run failed {}", e.what());
+    }
 }
 
 int main(int argc, char* argv[])
@@ -53,6 +60,7 @@ int main(int argc, char* argv[])
 
         return EXIT_FAILURE;
     }
+
 
     return EXIT_SUCCESS;
 }

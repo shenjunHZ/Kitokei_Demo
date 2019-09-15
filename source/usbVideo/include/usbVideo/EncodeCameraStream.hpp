@@ -31,6 +31,11 @@ namespace usbVideo
         void closeEncoder() override;
 
     private:
+        Logger& m_logger;
+        const configuration::AppConfiguration& m_config;
+        int videoWidth;
+        int videoHeight;
+
         FILE* m_fd{nullptr};
         AVCodec* m_codec{ nullptr };
         AVCodecContext* m_codecContext{nullptr};
@@ -38,11 +43,6 @@ namespace usbVideo
         AVStream* m_stream{nullptr};
         AVFrame* m_yuv{nullptr};
         std::vector<uint8_t> rgbBuffer;
-        int videoWidth;
-        int videoHeight;
-
-        Logger& m_logger;
-        const configuration::AppConfiguration& m_config;
     };
 
 } // namespace Video

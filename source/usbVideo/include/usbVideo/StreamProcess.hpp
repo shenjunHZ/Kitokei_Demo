@@ -19,8 +19,9 @@ namespace usbVideo
         bool initRegister();
 
     private:
-        std::unique_ptr<IEncodeCameraStream> m_EncodeCameraStream;
         Logger& m_logger;
+        std::unique_ptr<IEncodeCameraStream> m_EncodeCameraStream;
+
         std::string m_inputFile{};
     };
 } // namespace Video

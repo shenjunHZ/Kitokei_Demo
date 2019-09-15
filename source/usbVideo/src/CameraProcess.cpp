@@ -71,11 +71,11 @@ namespace usbVideo
         , m_pipeName{ common::getPipeFileName(config) }
         , m_outputDir{ common::getCaptureOutputDir(config) }
         , m_V4l2RequestBuffersCounter{ getV4l2RequestBuffersCounter(config) }
-        , m_captureFormat{ covertV4L2CaptureFormat(getV4L2CaptureFormat(config)) }
         , m_logger{logger}
         , m_cameraControl(std::make_unique<CameraControl>(getDefaultCameraDevice(config)))
     {
- 
+        std::string format = getV4L2CaptureFormat(config);
+        m_captureFormat = covertV4L2CaptureFormat(format);
     }
 
     CameraProcess::~CameraProcess()

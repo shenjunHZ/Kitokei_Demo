@@ -9,4 +9,8 @@ namespace common
     std::string getCaptureOutputDir(const configuration::AppConfiguration& config);
 
     std::string getPipeFileName(const configuration::AppConfiguration& config);
+
+    int getCaptureWidth(const configuration::AppConfiguration& config);
+
+    int getCaptureHeight(const configuration::AppConfiguration& config);
 } // namespace common

@@ -1,31 +1,14 @@
 #include "usbVideo/EncodeCameraStream.hpp"
 #include "Configurations/ParseConfigFile.hpp"
+#include "common/CommonFunction.hpp"
 
 namespace
 {
-    int getCaptureWidth(const configuration::AppConfiguration& config)
-    {
-        if (config.find(configuration::pipeFileName) != config.end())
-        {
-            return config[configuration::pipeFileName].as<int>();
-        }
-        return 640;
-    }
-
-    int getCaptureHeight(const configuration::AppConfiguration& config)
-    {
-        if (config.find(configuration::pipeFileName) != config.end())
-        {
-            return config[configuration::pipeFileName].as<int>();
-        }
-        return 480;
-    }
-
     int getVideoFPS(const configuration::AppConfiguration& config)
     {
-        if (config.find(configuration::pipeFileName) != config.end())
+        if (config.find(configuration::videoFPS) != config.end())
         {
-            return config[configuration::pipeFileName].as<int>();
+            return config[configuration::videoFPS].as<int>();
         }
         return 25;
     }
@@ -41,10 +24,9 @@ namespace usbVideo
     EncodeCameraStream::EncodeCameraStream(Logger& logger, const configuration::AppConfiguration& config)
         : m_logger{logger}
         , m_config{config}
-        , videoWidth{ getCaptureWidth (config)}
-        , videoHeight{ getCaptureHeight (config)}
     {
-
+        videoWidth = common::getCaptureWidth(config);
+        videoHeight = common::getCaptureHeight(config);
     }
 
     bool EncodeCameraStream::initRegister(const std::string& inputFile)
@@ -78,8 +60,8 @@ namespace usbVideo
             LOG_ERROR_MSG("alloc context failed.");
             return false;
         }
-        m_codecContext->width = getCaptureWidth(m_config);
-        m_codecContext->height = getCaptureHeight(m_config);
+        m_codecContext->width = videoWidth;
+        m_codecContext->height = videoHeight;
         m_codecContext->time_base = {1, getVideoFPS(m_config)};
         m_codecContext->framerate = {getVideoFPS(m_config), 1};
         m_codecContext->bit_rate = m_codecContext->width * m_codecContext->height * getVideoFPS(m_config) * bitDepth;
@@ -153,8 +135,8 @@ namespace usbVideo
             return false;
         }
         m_yuv->format = AV_PIX_FMT_YUV420P;
-        m_yuv->width = getCaptureWidth(m_config);
-        m_yuv->height = getCaptureHeight(m_config);
+        m_yuv->width = videoWidth;
+        m_yuv->height = videoHeight;
         // Allocate new buffer(s) for audio or video data.
         ret = av_frame_get_buffer(m_yuv, alignment);
         if (ret < 0)
@@ -187,13 +169,11 @@ namespace usbVideo
     {
         int p = 0;
         rgbBuffer.clear();
-        rgbBuffer.resize(getCaptureWidth(m_config) * getCaptureHeight(m_config) * RGBCountSize);
-        int width = getCaptureWidth(m_config);
-        int height = getCaptureHeight(m_config);
+        rgbBuffer.resize(videoWidth * videoHeight * RGBCountSize);
 
         SwsContext* swsContext = sws_getCachedContext(swsContext,
-            width, height, AV_PIX_FMT_BGRA,
-            width, height, AV_PIX_FMT_YUV420P, SWS_BICUBIC,
+            videoWidth, videoHeight, AV_PIX_FMT_BGRA,
+            videoWidth, videoHeight, AV_PIX_FMT_YUV420P, SWS_BICUBIC,
             NULL, NULL, NULL);
 
         while (keep_running)

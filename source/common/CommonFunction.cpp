@@ -46,4 +46,22 @@ namespace common
         return "cameraCapturePipe";
     }
 
+    int getCaptureWidth(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::captureWidth) != config.end())
+        {
+            return config[configuration::captureWidth].as<int>();
+        }
+        return 640;
+    }
+
+    int getCaptureHeight(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::captureHeight) != config.end())
+        {
+            return config[configuration::captureHeight].as<int>();
+        }
+        return 480;
+    }
+
 } // namespace common

@@ -36,13 +36,14 @@ namespace application
         void initService();
 
     private:
-        ClientReceiver m_clientReceiver;
-
-        std::thread m_cameraProcessThread;
-        std::thread m_videoManagementThread;
-        std::unique_ptr<usbVideo::CameraProcess> m_cameraProcess{};
-        std::unique_ptr<usbVideo::IVideoManagement> m_videoManagement;
         std::unique_ptr<timerservice::IOService> m_ioService;
         std::unique_ptr<timerservice::TimerService> m_timerService{};
+        ClientReceiver m_clientReceiver;
+
+        std::unique_ptr<usbVideo::CameraProcess> m_cameraProcess{};
+        std::unique_ptr<usbVideo::IVideoManagement> m_videoManagement;
+        std::thread m_cameraProcessThread;
+        std::thread m_videoManagementThread;
+
     };
 } // namespace application

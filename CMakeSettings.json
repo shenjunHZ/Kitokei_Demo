@@ -3,7 +3,8 @@
         {
             "name": "linux-release",
             "generator": "Unix Makefiles",
-            "configurationType": "RelWithDebInfo",
+            //"configurationType": "RelWithDebInfo",
+            "configurationType": "Debug",
             "variables": [
                 {
                     "name": "CMAKE_CXX_COMPILER",
