@@ -63,7 +63,6 @@ namespace
 
 namespace usbVideo
 {
-    constexpr int PipeFileRight = 0666;
     std::atomic_bool keep_running{ true };
 
     CameraProcess::CameraProcess(Logger& logger, const configuration::AppConfiguration& config)
@@ -143,24 +142,7 @@ namespace usbVideo
         }
         outputDeviceInfo();
 
-        if (m_enableCameraStream && !m_pipeName.empty() && !m_outputDir.empty())
-        {
-            std::string pipeFile = m_outputDir + m_pipeName;
-            if (not common::isFileExistent(pipeFile))
-            {
-                if (-1 == mkfifo(pipeFile.c_str(), PipeFileRight))
-                {
-                    LOG_ERROR_MSG("Error creating the pipe: {}", pipeFile);
-                    m_cameraControl->closeDevice();
-                    return;
-                }
-            }
-            else
-            {
-                LOG_DEBUG_MSG("Pipe file have exist {}.", pipeFile);
-            }
-        }
-        else if(m_outputDir.empty())
+        if(m_outputDir.empty())
         {
             LOG_ERROR_MSG("output directory is empty.");
             m_cameraControl->closeDevice();

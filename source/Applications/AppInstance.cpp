@@ -4,22 +4,25 @@
 #include "timer/DefaultTimerService.hpp"
 #include "usbVideo/CameraProcess.hpp"
 #include "usbVideo/VideoManagement.hpp"
+#include "common/CommonFunction.hpp"
 
 namespace
 {
     std::atomic_bool keep_running{ true };
+    constexpr int PipeFileRight = 0666;
 } // namespace 
 namespace application
 {
     AppInstance::AppInstance(spdlog::logger& logger, const configuration::AppConfiguration& config, 
             const configuration::AppAddresses& appAddress)
-        : m_ioService{ std::make_unique<timerservice::IOService>() }
+        : m_config{config}
+        , m_ioService{ std::make_unique<timerservice::IOService>() }
         , m_timerService{ std::make_unique<timerservice::DefaultTimerService>(*m_ioService) }
         , m_clientReceiver{ logger, config, appAddress, *m_timerService }
-        , m_cameraProcess{ std::make_unique<usbVideo::CameraProcess>(logger, config) }
-        , m_videoManagement{ std::make_unique<usbVideo::VideoManagement>(logger, config, *m_timerService) }
+        , m_cameraProcess{ std::make_unique<usbVideo::CameraProcess>(logger, m_config) }
+        , m_videoManagement{ std::make_unique<usbVideo::VideoManagement>(logger, m_config, *m_timerService) }
     {
-        initService();
+        initService(logger);
     }
 
     AppInstance::~AppInstance()
@@ -30,8 +33,24 @@ namespace application
         }
     }
 
-    void AppInstance::initService()
+    void AppInstance::initService(spdlog::logger& logger)
     {
+        std::string outputDir = common::getCaptureOutputDir(m_config);
+        std::string pipeFileName = common::getPipeFileName(m_config);
+        std::string pipeFile = outputDir + pipeFileName;
+
+        if (not common::isFileExistent(pipeFile))
+        {
+            if (-1 == mkfifo(pipeFile.c_str(), PipeFileRight))
+            {
+                LOG_ERROR_MSG("Error creating the pipe: {}", pipeFile);
+                return;
+            }
+        }
+        else
+        {
+            LOG_DEBUG_MSG("Pipe file have exist {}.", pipeFile);
+        }
 
     }
 
@@ -44,6 +63,7 @@ namespace application
                 m_cameraProcess->runDevice();
             });
         }
+        m_videoManagement->runVideoManagement(); // last call as open pipe with read mode
 /*******************************************/
        // for test catch video
         while (keep_running)

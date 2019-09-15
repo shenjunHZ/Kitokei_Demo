@@ -27,6 +27,8 @@ namespace usbVideo
             timerservice::TimerService& timerService);
         ~VideoManagement() = default;
 
+        void runVideoManagement();
+
     private:
         void onTimeout() override;
 
@@ -35,6 +37,7 @@ namespace usbVideo
         const configuration::AppConfiguration& m_config;
         std::unique_ptr<StreamProcess> m_streamProcess;
         std::unique_ptr<TimeStamp> m_timeStamp;
+        timerservice::TimerService& m_timerService;
 
         std::thread streamThread;
         std::unique_ptr<timerservice::Timer> m_timer;

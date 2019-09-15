@@ -171,7 +171,7 @@ namespace usbVideo
     {
         if ( ioctl(m_cameraFd, VIDIOC_QBUF, &v4l2Buffer) < 0)
         {
-            LOG_ERROR_MSG("Type not supported, index out of bounds or no buffers allocate failed: {}", std::strerror(errno));
+            LOG_ERROR_MSG(" queue buffer failed: {}", std::strerror(errno));
             return false;
         }
         return true;

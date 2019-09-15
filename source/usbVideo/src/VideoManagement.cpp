@@ -40,19 +40,31 @@ namespace usbVideo
         , m_config{config}
         , m_streamProcess{ std::make_unique<StreamProcess>(logger, config) }
         , m_timeStamp{ std::make_unique<TimeStamp>() }
+        , m_timerService{timerService}
     {
+
+    }
+
+    void VideoManagement::runVideoManagement()
+    {
+        if (not m_streamProcess)
+        {
+            return;
+        }
+        m_streamProcess->initRegister();
+
         std::chrono::milliseconds period = std::chrono::milliseconds{ getVideoTimes(m_config) * 1000 * 60 };
 
-        m_timer = timerService.schedulePeriodicTimer(period, [this]()
-        {
-            onTimeout();
-        });
+        m_timer = m_timerService.schedulePeriodicTimer(period, [this]()
+            {
+                onTimeout();
+            });
 
-        std::string outputFile = common::getCaptureOutputDir(config) + getVideoName(config) + m_timeStamp->now();
-        streamThread = std::thread([&m_streamProcess = this->m_streamProcess, &outputFile]() 
-        {
-            m_streamProcess->startEncodeStream(outputFile);
-        });
+        std::string outputFile = common::getCaptureOutputDir(m_config) + getVideoName(m_config) + m_timeStamp->now();
+        streamThread = std::thread([&m_streamProcess = this->m_streamProcess, &outputFile]()
+            {
+                m_streamProcess->startEncodeStream(outputFile);
+            });
     }
 
     void VideoManagement::onTimeout()
@@ -66,9 +78,9 @@ namespace usbVideo
 
         std::string outputFile = common::getCaptureOutputDir(m_config) + getVideoName(m_config) + m_timeStamp->now();
         streamThread = std::thread([&m_streamProcess = this->m_streamProcess, &outputFile]()
-        {
-            m_streamProcess->startEncodeStream(outputFile);
-        });
+            {
+                m_streamProcess->startEncodeStream(outputFile);
+            });
     }
 
 } // namespace usbVideo

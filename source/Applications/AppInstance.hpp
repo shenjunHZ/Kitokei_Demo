@@ -33,9 +33,10 @@ namespace application
         void loopFuction();
 
     private:
-        void initService();
+        void initService(spdlog::logger& logger);
 
     private:
+        const configuration::AppConfiguration& m_config;
         std::unique_ptr<timerservice::IOService> m_ioService;
         std::unique_ptr<timerservice::TimerService> m_timerService{};
         ClientReceiver m_clientReceiver;

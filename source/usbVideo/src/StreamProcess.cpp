@@ -10,7 +10,6 @@ namespace usbVideo
         , m_EncodeCameraStream{std::make_unique<EncodeCameraStream>(logger, config)}
     {
         m_inputFile = common::getCaptureOutputDir(config) + common::getPipeFileName(config);
-        initRegister();
     }
 
     bool StreamProcess::initRegister()

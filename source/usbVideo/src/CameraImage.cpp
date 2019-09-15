@@ -218,6 +218,10 @@ namespace usbVideo
             LOG_ERROR_MSG("Error writing the {} file.", fileName.c_str());
             return -1;
         }
+        else
+        {
+            LOG_DEBUG_MSG("writing the data {}", data_size);
+        }
 
         fclose(fd);
         return 0;

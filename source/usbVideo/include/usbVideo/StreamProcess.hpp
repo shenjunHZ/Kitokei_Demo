@@ -10,13 +10,11 @@ namespace usbVideo
     {
     public:
         StreamProcess(Logger& logger, const configuration::AppConfiguration& config);
+        bool initRegister();
         void startEncodeStream(const std::string& outputFile);
         void stopEncodeStream();
 
         ~StreamProcess() = default;
-
-    private:
-        bool initRegister();
 
     private:
         Logger& m_logger;
