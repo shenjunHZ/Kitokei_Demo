@@ -45,6 +45,17 @@ namespace usbVideo
 
     }
 
+
+    VideoManagement::~VideoManagement()
+    {
+        m_streamProcess->stopEncodeStream();
+
+        if (streamThread.joinable())
+        {
+            streamThread.join();
+        }
+    }
+
     void VideoManagement::runVideoManagement()
     {
         if (not m_streamProcess)
@@ -60,8 +71,8 @@ namespace usbVideo
                 onTimeout();
             });
 
-        std::string outputFile = common::getCaptureOutputDir(m_config) + getVideoName(m_config) + m_timeStamp->now();
-        streamThread = std::thread([&m_streamProcess = this->m_streamProcess, &outputFile]()
+        std::string outputFile = common::getCaptureOutputDir(m_config) + getVideoName(m_config) + "_" + m_timeStamp->now();
+        streamThread = std::thread([&m_streamProcess = this->m_streamProcess, outputFile]()
             {
                 m_streamProcess->startEncodeStream(outputFile);
             });
