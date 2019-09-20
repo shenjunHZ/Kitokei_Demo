@@ -64,13 +64,13 @@ namespace application
             });
         }
         m_videoManagement->runVideoManagement(); // last call as open pipe with read mode
-/*******************************************/
+
        // for test catch video
         while (keep_running)
         {
-            sleep(1000);
+            sleep(1);
+            //LOG_DEBUG_MSG("this is main thread.");
         }
-/******************************************/
         
         usbVideo::CameraProcess::stopRun();
         return;
