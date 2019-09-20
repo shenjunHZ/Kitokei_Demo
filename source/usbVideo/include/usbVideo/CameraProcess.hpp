@@ -46,5 +46,6 @@ namespace usbVideo
 
         bool m_bSharedMemory{false};
         Logger& m_logger;
+        FILE* m_fd{ nullptr };
     };
 } // namespace Video

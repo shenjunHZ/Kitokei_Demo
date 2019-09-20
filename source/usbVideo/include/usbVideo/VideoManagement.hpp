@@ -25,7 +25,7 @@ namespace usbVideo
 
         VideoManagement(Logger& logger, const configuration::AppConfiguration& config,
             timerservice::TimerService& timerService);
-        ~VideoManagement() = default;
+        ~VideoManagement();
 
         void runVideoManagement();
 

@@ -27,7 +27,7 @@ namespace usbVideo
         {
             return;
         }
-        LOG_DEBUG_MSG("Start write file...");
+        LOG_DEBUG_MSG("...Start write file....");
         m_EncodeCameraStream->runWriteFile();
     }
 

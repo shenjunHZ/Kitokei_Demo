@@ -148,6 +148,13 @@ namespace usbVideo
             m_cameraControl->closeDevice();
             return;
         }
+        std::string fileName = m_outputDir + m_pipeName;
+        m_fd = fopen(fileName.c_str(), "wb");
+        if (nullptr == m_fd)
+        {
+            LOG_ERROR_MSG("open write file fail {}.", std::strerror(errno));
+            return;
+        }
 
         v4l2Requestbuffers requestBuffers;
         requestBuffers.count = m_V4l2RequestBuffersCounter;
@@ -170,7 +177,7 @@ namespace usbVideo
         if (m_enableCameraStream)
         {
             // stream
-            LOG_DEBUG_MSG("Start camera streaming ...");
+            LOG_DEBUG_MSG("....Start catch camera stream ....");
             streamCamera();
         }
         else if(not captureCamera())
@@ -178,6 +185,7 @@ namespace usbVideo
             LOG_DEBUG_MSG("Capture camera file failure.");
         }
 
+        fclose(m_fd);
         exitProcess();
     }
 
@@ -293,25 +301,47 @@ namespace usbVideo
                 {
                 case V4L2_PIX_FMT_YUYV:
                     /* convert data to rgb */
-                    if (m_cameraControl->getRGBBuffer(rgbBuffer, v4l2Buffer, m_v4l2Format.fmt.pix.width, m_v4l2Format.fmt.pix.height))
-                    {
-                        LOG_DEBUG_MSG("Converted to rgb.");
-                    }
+                    m_cameraControl->getRGBBuffer(rgbBuffer, v4l2Buffer, m_v4l2Format.fmt.pix.width, m_v4l2Format.fmt.pix.height);
                     break;
                 default:
                     LOG_ERROR_MSG("Unsupported pixelformat!");
                     return;
                 }
 
-                /* make the image */
+                /* write data */
+                int64_t data_size = m_v4l2Format.fmt.pix.width * m_v4l2Format.fmt.pix.height * RGBCountSize;
+                size_t writeDataSize = 0;
+                int index = 0;
 
-                /* create the file name */
-                std::string fileName = m_outputDir + m_pipeName;
-                makeCaptureRGB(&rgbBuffer[0],
-                    fileName,
-                    m_v4l2Format.fmt.pix.width,
-                    m_v4l2Format.fmt.pix.height);
+                while (data_size)
+                {
+                    if (index >= rgbBuffer.size())
+                    {
+                        break;
+                    }
 
+                    if (data_size > PIPE_BUF)
+                    {
+                        writeDataSize = fwrite(&rgbBuffer[index], 1, PIPE_BUF, m_fd);
+                        if (writeDataSize < PIPE_BUF)
+                        {
+                            LOG_ERROR_MSG("Error writing the data {}, should data {}.", writeDataSize, PIPE_BUF);
+                        }
+                    }
+                    else
+                    {
+                        writeDataSize = fwrite(&rgbBuffer[index], 1, data_size, m_fd);
+                        if (writeDataSize < data_size)
+                        {
+                            LOG_ERROR_MSG("Error writing the data {}, should data {}.", writeDataSize, data_size);
+                        }
+                    }
+                    index += writeDataSize;
+                    data_size -= writeDataSize;
+                    fflush(m_fd);
+                } 
+
+                //LOG_DEBUG_MSG("Success writing the data {}", index);
                 m_cameraControl->queueBuffer(v4l2Buffer);
             }
         }

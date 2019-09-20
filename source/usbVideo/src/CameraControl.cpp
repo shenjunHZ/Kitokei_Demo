@@ -171,7 +171,7 @@ namespace usbVideo
     {
         if ( ioctl(m_cameraFd, VIDIOC_QBUF, &v4l2Buffer) < 0)
         {
-            LOG_ERROR_MSG(" queue buffer failed: {}", std::strerror(errno));
+            //LOG_ERROR_MSG(" queue buffer failed: {}", std::strerror(errno));
             return false;
         }
         return true;
@@ -181,7 +181,7 @@ namespace usbVideo
     {
         if (ioctl(m_cameraFd, VIDIOC_DQBUF, &v4l2Buffer) < 0)
         {
-            LOG_ERROR_MSG("depueue buffer failed: {}", std::strerror(errno));
+           // LOG_ERROR_MSG("depueue buffer failed: {}", std::strerror(errno));
             return false;
         }
 

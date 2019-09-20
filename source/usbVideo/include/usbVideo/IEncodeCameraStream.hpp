@@ -17,9 +17,7 @@ namespace usbVideo
         virtual void stopWriteFile() = 0;
         // create encoder
         virtual bool createEncoder() = 0;
-        // open encoder
-        virtual bool openEncoder() = 0;
-        // close encoder
-        virtual void closeEncoder() = 0;
+        // destroy encoder
+        virtual void destroyEncoder() = 0;
     };
 } // namespace usbVideo

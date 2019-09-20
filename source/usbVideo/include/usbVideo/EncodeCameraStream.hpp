@@ -16,6 +16,7 @@ namespace usbVideo
     {
     public:
         EncodeCameraStream(Logger& logger, const configuration::AppConfiguration& config);
+        ~EncodeCameraStream();
         bool initRegister(const std::string& inputFile) override;
         bool prepareOutputContext(const std::string& outputFile) override;
 
@@ -25,23 +26,23 @@ namespace usbVideo
     private:
         // create encoder
         bool createEncoder() override;
-        // open encoder
-        bool openEncoder() override;
-        // close encoder
-        void closeEncoder() override;
+        // destroy encoder
+        void destroyEncoder() override;
 
     private:
         Logger& m_logger;
         const configuration::AppConfiguration& m_config;
         int videoWidth;
         int videoHeight;
+        // Format I/O context.
+        AVCodecContext*  m_codecContext{ nullptr };
+        AVCodec*         m_codec{ nullptr };
+        AVDictionary*    m_dictionary{nullptr};
+        AVFormatContext* m_formatContext{ nullptr };
+        AVStream* m_stream{ nullptr };
+        AVFrame* m_yuv{ nullptr };
 
         FILE* m_fd{nullptr};
-        AVCodec* m_codec{ nullptr };
-        AVCodecContext* m_codecContext{nullptr};
-        AVFormatContext* m_formatContext{nullptr};
-        AVStream* m_stream{nullptr};
-        AVFrame* m_yuv{nullptr};
         std::vector<uint8_t> rgbBuffer;
     };
 

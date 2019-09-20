@@ -22,7 +22,7 @@ void swap(T& a, T& b)
 
 namespace usbVideo
 {
-    /* Copyright 2007 (c) Logitech. All Rights Reserved. (yuv -> rgb conversion) */
+    /* yuv -> rgb conversion */
     int convertYuvToRgbPixel(int y, int u, int v)
     {
         unsigned int pixel32 = 0;
@@ -54,8 +54,9 @@ namespace usbVideo
         unsigned char pixel_24[3];
         unsigned int pixel32;
         int y0, u, y1, v;
+        const int YUYV = 4;
 
-        for (in = 0; in < width * height * 2; in += 4) 
+        for (in = 0; in < width * height * 2; in += YUYV)
         {
             pixel_16 =
                 yuv[in + 3] << 24 |
