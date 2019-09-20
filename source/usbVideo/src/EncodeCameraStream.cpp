@@ -179,6 +179,7 @@ namespace usbVideo
 
     void EncodeCameraStream::runWriteFile()
     {
+        keep_running = true;
         int p = 0;
         rgbBuffer.clear();
         rgbBuffer.resize(videoWidth * videoHeight * RGBCountSize);
@@ -289,6 +290,7 @@ namespace usbVideo
         if (m_formatContext)
         {
             avformat_free_context(m_formatContext);
+            m_formatContext = nullptr;
         }
 
         if (m_codecContext)
@@ -298,11 +300,13 @@ namespace usbVideo
 
             //  Free the codec context and everything associated with it and write NULL to the provided pointer.
             avcodec_free_context(&m_codecContext);
+            m_codecContext = nullptr;
         }
         
         if (m_yuv)
         {
             av_free(m_yuv);
+            m_yuv = nullptr;
         }
     }
 
