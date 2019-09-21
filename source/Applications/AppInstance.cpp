@@ -27,6 +27,8 @@ namespace application
 
     AppInstance::~AppInstance()
     {
+        usbVideo::CameraProcess::stopRun();
+
         if (m_cameraProcessThread.joinable())
         {
             m_cameraProcessThread.join();
@@ -71,8 +73,7 @@ namespace application
             sleep(1);
             //LOG_DEBUG_MSG("this is main thread.");
         }
-        
-        usbVideo::CameraProcess::stopRun();
+ 
         return;
     }
 

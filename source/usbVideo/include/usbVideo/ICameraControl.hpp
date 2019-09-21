@@ -19,8 +19,9 @@ namespace usbVideo
         virtual bool getCameraCapability(struct v4l2_capability&) = 0;
         // get the camera video format
         virtual bool getCameraFrameFormat(struct v4l2_format&) = 0;
-        // get frame format
-        virtual bool getCameraFrameType(struct v4l2_fmtdesc&) = 0;
+
+        // get best frame format
+        virtual bool getBestCameraFrameFormat(struct v4l2_fmtdesc& fmtdesc) = 0;
 
         // set video capture format
         virtual bool setCameraPixFormat(uint32_t width, uint32_t height) = 0;

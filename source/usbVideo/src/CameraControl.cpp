@@ -3,12 +3,12 @@
 #include <unistd.h>
 #include "usbVideo/CameraControl.hpp"
 #include "usbVideo/CameraImage.hpp"
-#include "logger/Logger.hpp"
 
 namespace usbVideo
 {
-    CameraControl::CameraControl(const std::string& cameraDev)
-        : m_cameraDev{std::move(cameraDev)}
+    CameraControl::CameraControl(Logger& logger, const std::string& cameraDev)
+        : m_logger{logger}
+        , m_cameraDev{std::move(cameraDev)}
     {
 
     }
@@ -77,16 +77,140 @@ namespace usbVideo
         return true;
     }
 
-    bool CameraControl::getCameraFrameType(struct v4l2_fmtdesc& fmtdesc)
+    bool CameraControl::getBestCameraFrameFormat(struct v4l2_fmtdesc& fmtdesc)
     {
-        fmtdesc.index = 0; // can while index ++ get all frame format
+        int ret = -1;
+        //  All formats are enumerable by beginning at index zero and incrementing by one until EINVAL is returned.
+        fmtdesc.index = 0;
         fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        if (ioctl(m_cameraFd, VIDIOC_ENUM_FMT, &fmtdesc) < 0)
+        while ((ret = ioctl(m_cameraFd, VIDIOC_ENUM_FMT, &fmtdesc)) == 0)
         {
-            LOG_DEBUG_MSG("have no support frame format.");
+            fmtdesc.index++;
+
+            LOG_DEBUG_MSG("pixelformat = {} {} {} {}, description = {}",
+                fmtdesc.pixelformat & 0xFF,
+                (fmtdesc.pixelformat >> 8) & 0xFF,
+                (fmtdesc.pixelformat >> 16) & 0xFF, 
+                (fmtdesc.pixelformat >> 24) & 0xFF,
+                fmtdesc.description);
+            // pixel fromat is a four character code as computed by the v4l2_fourcc() macro
+            if (V4L2_PIX_FMT_YUYV != fmtdesc.pixelformat)
+            {
+                continue;
+            }
+
+            ret = getPixelFormat(fmtdesc);
+            if (not ret)
+            {
+                LOG_ERROR_MSG("Unable to get frame sizes.");
+            }
+        }
+        if (errno != EINVAL) 
+        {
+            LOG_ERROR_MSG("ERROR enumerating frame formats: {}", errno);
             return false;
         }
-        LOG_DEBUG_MSG("Support frame format {}.", fmtdesc.description);
+
+        return ret;
+    }
+
+
+    bool CameraControl::getPixelFormat(struct v4l2_fmtdesc& fmtdesc)
+    {
+        int ret = -1;
+        struct v4l2_frmsizeenum fsize;
+
+        memset(&fsize, 0, sizeof(fsize));
+        fsize.index = 0;
+        fsize.pixel_format = fmtdesc.pixelformat;
+        // Pointer to a struct v4l2_frmsizeenum that contains an index and pixel format and receives a frame width and height.
+        while ((ret = ioctl(m_cameraFd, VIDIOC_ENUM_FRAMESIZES, &fsize)) == 0) 
+        {
+            if (fsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) 
+            {
+                LOG_DEBUG_MSG("pixel format discrete: width = {}, height = {}",
+                    fsize.discrete.width, fsize.discrete.height);
+
+                ret = getFrameIntervals(fsize);
+
+                if (not ret)
+                {
+                    LOG_ERROR_MSG("Unable to get frame intervals.");
+                }
+            }
+            else if (fsize.type == V4L2_FRMSIZE_TYPE_CONTINUOUS) 
+            {
+                LOG_DEBUG_MSG("continuous: min width = {}, height = {}; max width = {}, height = {}",
+                    fsize.stepwise.min_width, fsize.stepwise.min_height,
+                    fsize.stepwise.max_width, fsize.stepwise.max_height);
+
+                LOG_DEBUG_MSG("Refusing to enumerate frame intervals.");
+                break;
+            }
+            else if (fsize.type == V4L2_FRMSIZE_TYPE_STEPWISE) 
+            {
+                LOG_DEBUG_MSG("stepwise: min width = {}, height = {}; max width = {}, height = {};"
+                    "stepsize width = {}, height = {}",
+                    fsize.stepwise.min_width, fsize.stepwise.min_height,
+                    fsize.stepwise.max_width, fsize.stepwise.max_height,
+                    fsize.stepwise.step_width, fsize.stepwise.step_height);
+
+                LOG_DEBUG_MSG("Refusing to enumerate frame intervals.");
+                break;
+            }
+            fsize.index++;
+        }
+        if (ret != 0 && errno != EINVAL) 
+        {
+            LOG_ERROR_MSG("ERROR enumerating frame sizes: {}", errno);
+            return false;
+        }
+
+        return true;
+    }
+
+    bool CameraControl::getFrameIntervals(const struct v4l2_frmsizeenum& frmSizeEnum)
+    {
+        int ret = -1;
+        struct v4l2_frmivalenum fival;
+        memset(&fival, 0, sizeof(fival));
+
+        fival.index = 0;
+        fival.pixel_format = frmSizeEnum.pixel_format;
+        fival.width = frmSizeEnum.discrete.width;
+        fival.height = frmSizeEnum.discrete.height;
+
+        while ((ret = ioctl(m_cameraFd, VIDIOC_ENUM_FRAMEINTERVALS, &fival)) == 0) 
+        {
+            if (fival.type == V4L2_FRMIVAL_TYPE_DISCRETE) 
+            {
+                LOG_DEBUG_MSG("Time interval between frame: {}/{} .",
+                    fival.discrete.numerator, fival.discrete.denominator);
+            }
+            else if (fival.type == V4L2_FRMIVAL_TYPE_CONTINUOUS) 
+            {
+                LOG_DEBUG_MSG("Time interval between frame: min {}/{}; max {}/{} .",
+                    fival.stepwise.min.numerator, fival.stepwise.min.numerator,
+                    fival.stepwise.max.denominator, fival.stepwise.max.denominator);
+                break;
+            }
+            else if (fival.type == V4L2_FRMIVAL_TYPE_STEPWISE) 
+            {
+                LOG_DEBUG_MSG("Time interval between frame: min {}/{}; max {}/{} "
+                    "stepsize {}/{} .",
+                    fival.stepwise.min.numerator, fival.stepwise.min.denominator,
+                    fival.stepwise.max.numerator, fival.stepwise.max.denominator,
+                    fival.stepwise.step.numerator, fival.stepwise.step.denominator);
+                break;
+            }
+            fival.index++;
+        }
+        if (ret != 0 && errno != EINVAL) 
+        {
+            LOG_ERROR_MSG("ERROR enumerating frame intervals: {}", errno);
+            return false;
+        }
+
         return true;
     }
 

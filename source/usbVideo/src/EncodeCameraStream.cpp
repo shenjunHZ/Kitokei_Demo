@@ -14,7 +14,6 @@ namespace
     }
 
     constexpr int threadCounts = 8;
-    constexpr int bitRate = 400 * 1000;
     constexpr int minQuantizer = 10;
     constexpr int maxQuantizer = 51;
     constexpr int maxBframe = 3;
@@ -76,8 +75,8 @@ namespace usbVideo
          m_codecContext->width = videoWidth;
          m_codecContext->height = videoHeight;
          m_codecContext->time_base = {1, getVideoFPS(m_config)};
-//         m_codecContext->framerate = {getVideoFPS(m_config), 1};
-         m_codecContext->bit_rate = bitRate;
+         m_codecContext->framerate = {getVideoFPS(m_config), 1};
+         m_codecContext->bit_rate = common::getVideoBitRate(m_config);
          m_codecContext->gop_size = getVideoFPS(m_config) * 2;
          m_codecContext->max_b_frames = maxBframe;
          m_codecContext->pix_fmt = AV_PIX_FMT_YUV420P;
@@ -86,7 +85,7 @@ namespace usbVideo
          m_codecContext->qmin = minQuantizer;
          m_codecContext->qmax = maxQuantizer;
          m_codecContext->thread_count = threadCounts;
-//         m_codecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+         m_codecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
          av_dict_set(&m_dictionary, "preset", "slow", 0);
          av_dict_set(&m_dictionary, "tune", "zerolatency", 0);
 
@@ -236,9 +235,13 @@ namespace usbVideo
             int inlinesize[AV_NUM_DATA_POINTERS] = { 0 };
             inlinesize[0] = videoWidth * RGBCountSize;
 
-            int h = sws_scale(swsContext, indata, inlinesize, 0, videoHeight, m_yuv->data, m_yuv->linesize);
-            if (h <= 0)
+            int outputHeight = sws_scale(swsContext, 
+                indata, inlinesize, 
+                0, videoHeight, 
+                m_yuv->data, m_yuv->linesize);
+            if (outputHeight <= 0)
             {
+                LOG_ERROR_MSG("Scale change failed.");
                 continue;
             }
             //6 encode frame

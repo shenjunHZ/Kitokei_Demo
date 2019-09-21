@@ -39,8 +39,8 @@ namespace usbVideo
         AVCodec*         m_codec{ nullptr };
         AVDictionary*    m_dictionary{nullptr};
         AVFormatContext* m_formatContext{ nullptr };
-        AVStream* m_stream{ nullptr };
-        AVFrame* m_yuv{ nullptr };
+        AVStream*        m_stream{ nullptr };
+        AVFrame*         m_yuv{ nullptr };
 
         FILE* m_fd{nullptr};
         std::vector<uint8_t> rgbBuffer;

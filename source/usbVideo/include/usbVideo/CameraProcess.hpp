@@ -31,6 +31,7 @@ namespace usbVideo
         void exitProcess();
 
     private:
+        Logger& m_logger;
         std::unique_ptr<ICameraControl> m_cameraControl;
         v4l2Capability m_v4l2Capability;
         v4l2Format m_v4l2Format;
@@ -45,7 +46,6 @@ namespace usbVideo
         configuration::captureFormat m_captureFormat{ configuration::captureFormat::CAPTURE_FORMAT_BMP };
 
         bool m_bSharedMemory{false};
-        Logger& m_logger;
         FILE* m_fd{ nullptr };
     };
 } // namespace Video

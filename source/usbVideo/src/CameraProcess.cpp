@@ -6,7 +6,6 @@
 #include "usbVideo/CameraProcess.hpp"
 #include "usbVideo/CameraControl.hpp"
 #include "usbVideo/CameraImage.hpp"
-#include "logger/Logger.hpp"
 
 namespace
 {
@@ -66,12 +65,12 @@ namespace usbVideo
     std::atomic_bool keep_running{ true };
 
     CameraProcess::CameraProcess(Logger& logger, const configuration::AppConfiguration& config)
-        : m_enableCameraStream{ getEnableCameraStream(config) }
+        : m_logger{ logger }
+        , m_enableCameraStream{ getEnableCameraStream(config) }
         , m_pipeName{ common::getPipeFileName(config) }
         , m_outputDir{ common::getCaptureOutputDir(config) }
         , m_V4l2RequestBuffersCounter{ getV4l2RequestBuffersCounter(config) }
-        , m_logger{logger}
-        , m_cameraControl(std::make_unique<CameraControl>(getDefaultCameraDevice(config)))
+        , m_cameraControl(std::make_unique<CameraControl>(logger, getDefaultCameraDevice(config)))
     {
         std::string format = getV4L2CaptureFormat(config);
         m_captureFormat = covertV4L2CaptureFormat(format);
@@ -103,6 +102,9 @@ namespace usbVideo
                 m_cameraControl->closeDevice();
                 return false;
             }
+
+            struct v4l2_fmtdesc fmtdesc;
+            m_cameraControl->getBestCameraFrameFormat(fmtdesc);
         }
         return true;
     }
@@ -361,12 +363,6 @@ namespace usbVideo
 
         m_cameraControl->unMapBuffers();
         m_cameraControl->closeDevice();
-
-        if (m_bSharedMem)
-        {
-
-        }
-
     }
 
     void CameraProcess::stopRun()
