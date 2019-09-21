@@ -10,21 +10,22 @@
 namespace configuration
 {
     constexpr auto logFilePath = LOG_CONFIG_PREFIX ".logFilePath";
-    constexpr auto cameraDevice = VIDEO_CONFIG_PREFIX ".cameraDevice";
+    constexpr auto cameraDevice       = VIDEO_CONFIG_PREFIX ".cameraDevice";
     constexpr auto enableCameraStream = VIDEO_CONFIG_PREFIX ".enableCameraStream";
-    constexpr auto pipeFileName = VIDEO_CONFIG_PREFIX ".pipeFileName";
-    constexpr auto captureOutputDir = VIDEO_CONFIG_PREFIX ".captureOutputDir";
-    constexpr auto videoName = VIDEO_CONFIG_PREFIX ".videoName";
-    constexpr auto videoFPS = VIDEO_CONFIG_PREFIX ".videoFPS";
-    constexpr auto videoTimes = VIDEO_CONFIG_PREFIX ".videoTimes";
+    constexpr auto pipeFileName       = VIDEO_CONFIG_PREFIX ".pipeFileName";
+    constexpr auto captureOutputDir   = VIDEO_CONFIG_PREFIX ".captureOutputDir";
+    constexpr auto videoName          = VIDEO_CONFIG_PREFIX ".videoName";
+    constexpr auto videoFPS           = VIDEO_CONFIG_PREFIX ".videoFPS";
+    constexpr auto videoBitRate       = VIDEO_CONFIG_PREFIX ".videoBitRate";
+    constexpr auto videoTimes         = VIDEO_CONFIG_PREFIX ".videoTimes";
     constexpr auto V4l2RequestBuffersCounter = V4L2_CONFIG_PREFIX ".V4l2RequestBuffersCounter";
-    constexpr auto V4L2CaptureFormat = V4L2_CONFIG_PREFIX ".V4L2CaptureFormat";
-    constexpr auto captureWidth = V4L2_CONFIG_PREFIX ".captureWidth";
-    constexpr auto captureHeight = V4L2_CONFIG_PREFIX ".captureHeight";
+    constexpr auto V4L2CaptureFormat         = V4L2_CONFIG_PREFIX ".V4L2CaptureFormat";
+    constexpr auto captureWidth              = V4L2_CONFIG_PREFIX ".captureWidth";
+    constexpr auto captureHeight             = V4L2_CONFIG_PREFIX ".captureHeight";
     constexpr auto chessBoardServerAddress = SOCKET_CONFIG_PREFIX ".chessBoardServerAddress";
-    constexpr auto chessBoardServerPort = SOCKET_CONFIG_PREFIX ".chessBoardServerPort";
-    constexpr auto kitokeiLocalAddress = SOCKET_CONFIG_PREFIX ".kitokeiLocalAddress";
-    constexpr auto kitokeiLocalPort = SOCKET_CONFIG_PREFIX ".kitokeiLocalPort";
+    constexpr auto chessBoardServerPort    = SOCKET_CONFIG_PREFIX ".chessBoardServerPort";
+    constexpr auto kitokeiLocalAddress     = SOCKET_CONFIG_PREFIX ".kitokeiLocalAddress";
+    constexpr auto kitokeiLocalPort        = SOCKET_CONFIG_PREFIX ".kitokeiLocalPort";
 
     struct AppAddresses
     {

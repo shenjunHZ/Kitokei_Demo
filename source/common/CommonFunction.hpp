@@ -13,4 +13,6 @@ namespace common
     int getCaptureWidth(const configuration::AppConfiguration& config);
 
     int getCaptureHeight(const configuration::AppConfiguration& config);
+
+    int getVideoBitRate(const configuration::AppConfiguration& config);
 } // namespace common

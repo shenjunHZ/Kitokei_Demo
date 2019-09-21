@@ -11,21 +11,22 @@ namespace
 
         description.add_options()
             (configuration::logFilePath, value<std::string>()->default_value("./log/logFile.log"), "use for recored logs")
-            (configuration::cameraDevice, value<std::string>()->default_value("/dev/video0"), "camera device")
-            (configuration::enableCameraStream, value<bool>()->default_value(true), "enable camera stream capture.")
-            (configuration::pipeFileName, value<std::string>()->default_value("cameraCapturePipe"), "camera capture pipe file name.")
-            (configuration::captureOutputDir, value<std::string>()->default_value("/tmp/cameraCapture/"), "camera capture file path.")
-            (configuration::videoName, value<std::string>()->default_value("chessVideo"), "camera video file name.")
-            (configuration::videoFPS, value<int>()->default_value(25), "frame rate.")
-            (configuration::videoTimes, value<int>()->default_value(30), "each file times.")
-            (configuration::V4l2RequestBuffersCounter, value<int>()->default_value(2), "request mmap buffer counters.")
-            (configuration::V4L2CaptureFormat, value<std::string>()->default_value("BMP"), "capture format set.")
-            (configuration::captureWidth, value<int>()->default_value(640), "capture and video format width.")
-            (configuration::captureHeight, value<int>()->default_value(480), "capture and video format height.")
+            (configuration::cameraDevice,       value<std::string>()->default_value("/dev/video0"),         "camera device")
+            (configuration::enableCameraStream, value<bool>()->default_value(true),                         "enable camera stream capture.")
+            (configuration::pipeFileName,       value<std::string>()->default_value("cameraCapturePipe"),   "camera capture pipe file name.")
+            (configuration::captureOutputDir,   value<std::string>()->default_value("/tmp/cameraCapture/"), "camera capture file path.")
+            (configuration::videoName,          value<std::string>()->default_value("chessVideo"),          "camera video file name.")
+            (configuration::videoFPS,           value<int>()->default_value(25),                            "frame rate.")
+            (configuration::videoBitRate,       value<int>()->default_value(400000),                        "video bit rate.")
+            (configuration::videoTimes,         value<int>()->default_value(30),                            "each file times.")
+            (configuration::V4l2RequestBuffersCounter, value<int>()->default_value(2),             "request mmap buffer counters.")
+            (configuration::V4L2CaptureFormat,         value<std::string>()->default_value("BMP"), "capture format set.")
+            (configuration::captureWidth,              value<int>()->default_value(640),           "capture and video format width.")
+            (configuration::captureHeight,             value<int>()->default_value(480),           "capture and video format height.")
             (configuration::chessBoardServerAddress, value<std::string>()->default_value("192.168.2.140"), "chess board server ip address.")
-            (configuration::chessBoardServerPort, value<unsigned int>()->default_value(8080), "chess board server ip port.")
-            (configuration::kitokeiLocalAddress, value<std::string>()->default_value("127.0.0.1"), "kitokei local ip address.")
-            (configuration::kitokeiLocalPort, value<unsigned int>()->default_value(8080), "kitokei local ip port.");
+            (configuration::chessBoardServerPort,    value<unsigned int>()->default_value(8080),           "chess board server ip port.")
+            (configuration::kitokeiLocalAddress,     value<std::string>()->default_value("127.0.0.1"),     "kitokei local ip address.")
+            (configuration::kitokeiLocalPort,        value<unsigned int>()->default_value(8080),           "kitokei local ip port.");
 
         return description;
     }

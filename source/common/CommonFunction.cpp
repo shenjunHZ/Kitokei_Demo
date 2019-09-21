@@ -64,4 +64,13 @@ namespace common
         return 480;
     }
 
+    int getVideoBitRate(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::videoBitRate) != config.end())
+        {
+            return config[configuration::videoBitRate].as<int>();
+        }
+        return 400 * 1000;
+    }
+
 } // namespace common
