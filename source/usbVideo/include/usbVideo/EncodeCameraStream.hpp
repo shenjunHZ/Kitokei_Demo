@@ -24,6 +24,7 @@ namespace usbVideo
         void stopWriteFile() override;
 
     private:
+        void flushEncoder();
         // create encoder
         bool createEncoder() override;
         // destroy encoder

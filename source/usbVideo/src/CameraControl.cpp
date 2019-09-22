@@ -114,7 +114,6 @@ namespace usbVideo
         return ret;
     }
 
-
     bool CameraControl::getPixelFormat(struct v4l2_fmtdesc& fmtdesc)
     {
         int ret = -1;

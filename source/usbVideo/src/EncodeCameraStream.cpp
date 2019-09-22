@@ -266,6 +266,7 @@ namespace usbVideo
             av_interleaved_write_frame(m_formatContext, &pkt);
         }
 
+        flushEncoder();
         // Write the stream trailer to an output media file and free the file private data.
         if (m_formatContext)
         {
@@ -279,6 +280,45 @@ namespace usbVideo
         {
             sws_freeContext(swsContext);
         }
+    }
+
+    void EncodeCameraStream::flushEncoder()
+    {
+        /*    Encoder or decoder requires flushing with NULL input at the end in order to
+        *     give the complete and correct output.
+        */
+        if (not (m_codecContext->codec->capabilities & AV_CODEC_CAP_DELAY) )
+        {
+            return;
+        }
+        while (true) 
+        {
+            LOG_DEBUG_MSG("Flushing stream index {}, id {} encoder.", m_stream->index, m_stream->id);
+            /*  It can be NULL, in which case it is considered a flush packet.
+            *   This signals the end of the stream.
+            *   If the encoder still has packets buffered, it will return them after this call.
+            *   Once flushing mode has been entered, additional flush
+            *   packets are ignored, and sending frames will return AVERROR_EOF.
+            */
+            int ret = avcodec_send_frame(m_codecContext, nullptr);
+
+            AVPacket pkt;
+            // Initialize optional fields of a packet with default values.
+            av_init_packet(&pkt);
+
+            ret = avcodec_receive_packet(m_codecContext, &pkt);
+            if (ret < 0)
+            {
+                break;
+            }
+
+            ret = av_interleaved_write_frame(m_formatContext, &pkt);
+            if (ret < 0)
+            {
+                break;
+            }
+        }
+        return;
     }
 
     void EncodeCameraStream::destroyEncoder()
