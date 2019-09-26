@@ -5,9 +5,15 @@
 
 extern "C"
 {
+#include <stdio.h>
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
+#include <libavfilter/avfilter.h>
+#include <libavfilter/buffersrc.h>
+#include <libavfilter/buffersink.h>
+#include <libavutil/avutil.h>
+#include <libavutil/opt.h>
 }
 
 namespace usbVideo
@@ -29,6 +35,9 @@ namespace usbVideo
         bool createEncoder() override;
         // destroy encoder
         void destroyEncoder() override;
+        bool initFilter();
+        void initWatemake();
+        void addWatermarke(std::vector<uint8_t>& dataY);
 
     private:
         Logger& m_logger;
@@ -43,8 +52,13 @@ namespace usbVideo
         AVStream*        m_stream{ nullptr };
         AVFrame*         m_yuv{ nullptr };
 
+        AVFilterGraph*   m_filterGraph{ nullptr };
+        AVFilterContext* m_filterSrcContext{ nullptr };
+        AVFilterContext* m_filterSinkContext{ nullptr };
+
         FILE* m_fd{nullptr};
         std::vector<uint8_t> rgbBuffer;
+        std::vector<uint8_t> m_numArray;
     };
 
 } // namespace Video

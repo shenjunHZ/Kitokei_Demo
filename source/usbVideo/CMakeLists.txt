@@ -48,6 +48,8 @@ target_link_libraries(${MODULE_NAME}
         avdevice
         avcodec
         avutil
+        avfilter
+        postproc
         swresample
         swscale
         -lpthread
