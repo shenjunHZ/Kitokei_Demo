@@ -63,6 +63,20 @@ namespace configuration
         CAPTURE_FORMAT_LAST
     };
 
+    struct bestFrameSize
+    {
+        uint32_t frameWidth;
+        uint32_t frameHeight;
+        bool bBestFrame;
+
+        bestFrameSize()
+        {
+            frameWidth = 0;
+            frameHeight = 0;
+            bBestFrame = false;
+        }
+    };
+
     struct BMPfileMagic 
     {
         unsigned char magic[2];

@@ -23,7 +23,7 @@ namespace usbVideo
     public:
         EncodeCameraStream(Logger& logger, const configuration::AppConfiguration& config);
         ~EncodeCameraStream();
-        bool initRegister(const std::string& inputFile) override;
+        bool initRegister(const std::string& inputFile, const configuration::bestFrameSize& frameSize) override;
         bool prepareOutputContext(const std::string& outputFile) override;
 
         void runWriteFile() override;

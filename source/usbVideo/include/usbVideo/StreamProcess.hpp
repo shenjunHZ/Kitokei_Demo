@@ -10,7 +10,7 @@ namespace usbVideo
     {
     public:
         StreamProcess(Logger& logger, const configuration::AppConfiguration& config);
-        bool initRegister();
+        bool initRegister(const configuration::bestFrameSize& frameSize);
         void startEncodeStream(const std::string& outputFile);
         void stopEncodeStream();
 

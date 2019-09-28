@@ -27,7 +27,8 @@ namespace usbVideo
             timerservice::TimerService& timerService);
         ~VideoManagement();
 
-        void runVideoManagement();
+        void runVideoManagement() override;
+        bool initVideoManagement(const configuration::bestFrameSize& frameSize) override;
 
     private:
         void onTimeout() override;
@@ -41,5 +42,6 @@ namespace usbVideo
 
         std::thread streamThread;
         std::unique_ptr<timerservice::Timer> m_timer;
+        configuration::bestFrameSize m_bestFrameSize;
     };
 } // namespace usbVideo

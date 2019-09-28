@@ -56,8 +56,7 @@ namespace usbVideo
         : m_logger{logger}
         , m_config{config}
     {
-        videoWidth = common::getCaptureWidth(config);
-        videoHeight = common::getCaptureHeight(config);
+
     }
 
     EncodeCameraStream::~EncodeCameraStream()
@@ -69,14 +68,17 @@ namespace usbVideo
         }
     }
 
-    bool EncodeCameraStream::initRegister(const std::string& inputFile)
+    bool EncodeCameraStream::initRegister(const std::string& inputFile, const configuration::bestFrameSize& frameSize)
     {
+        // it needs to be in a thread, parallel to the writer thread, otherwise it will block
         m_fd = fopen(inputFile.c_str(), "rb");
         if (nullptr == m_fd)
         {
             LOG_ERROR_MSG("open input file failed {}", inputFile);
             return false;
         }
+        videoWidth = frameSize.frameWidth;
+        videoHeight = frameSize.frameHeight;
         // register all, have not been used
         //av_register_all();
         // register all encode, could be removed as av_register_all

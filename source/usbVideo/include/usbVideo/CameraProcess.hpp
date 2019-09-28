@@ -18,11 +18,11 @@ namespace usbVideo
     public:
         CameraProcess(Logger& logger, const configuration::AppConfiguration& config);
         ~CameraProcess();
+        bool initDevice(configuration::bestFrameSize& frameSize);
         void runDevice();
         static void stopRun();
 
     private:
-        bool initDevice();
         void outputDeviceInfo();
         int checkPixelFormat();
 

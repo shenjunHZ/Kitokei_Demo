@@ -16,7 +16,7 @@ namespace usbVideo
         bool closeDevice() override;
         bool getCameraCapability(struct v4l2_capability& capability) override;
         bool getCameraFrameFormat(struct v4l2_format& format) override;
-        bool getBestCameraFrameFormat(struct v4l2_fmtdesc& fmtdesc) override;
+        bool getBestCameraFrameFormat(configuration::bestFrameSize& frameSize) override;
 
         bool setCameraPixFormat(uint32_t width, uint32_t height) override { return false; };
 
@@ -35,7 +35,7 @@ namespace usbVideo
 
     private:
         bool queryMapBuffer(const struct v4l2_buffer& buffer);
-        bool getPixelFormat(struct v4l2_fmtdesc& fmtdesc);
+        bool getPixelFormat(struct v4l2_fmtdesc& fmtdesc, configuration::bestFrameSize& frameSize);
         bool getFrameIntervals(const struct v4l2_frmsizeenum& frmSizeEnum);
 
     private:

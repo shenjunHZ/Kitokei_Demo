@@ -1,6 +1,11 @@
 #pragma once
 #include <string>
 
+namespace configuration
+{
+    struct bestFrameSize;
+} // namespace configuration
+
 namespace usbVideo
 {
     class IEncodeCameraStream
@@ -8,7 +13,7 @@ namespace usbVideo
     public:
         virtual ~IEncodeCameraStream() = default;
         // init av register
-        virtual bool initRegister(const std::string& inputFile) = 0;
+        virtual bool initRegister(const std::string& inputFile, const configuration::bestFrameSize& frameSize) = 0;
         // prepare context
         virtual bool prepareOutputContext(const std::string& outputFile) = 0;
         // run write output file

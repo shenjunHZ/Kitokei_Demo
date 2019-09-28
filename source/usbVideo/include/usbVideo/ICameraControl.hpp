@@ -1,9 +1,14 @@
 #pragma once
 /*
-* use V4L2 framework get USB camera with YUV
+* use V4L2 framework get USB camera with YUYV
 */
 #include <stdint.h>
 #include <linux/videodev2.h>
+
+namespace configuration
+{
+    struct bestFrameSize;
+} // namespace configuration
 
 namespace usbVideo
 {
@@ -21,7 +26,7 @@ namespace usbVideo
         virtual bool getCameraFrameFormat(struct v4l2_format&) = 0;
 
         // get best frame format
-        virtual bool getBestCameraFrameFormat(struct v4l2_fmtdesc& fmtdesc) = 0;
+        virtual bool getBestCameraFrameFormat(configuration::bestFrameSize& frameSize) = 0;
 
         // set video capture format
         virtual bool setCameraPixFormat(uint32_t width, uint32_t height) = 0;

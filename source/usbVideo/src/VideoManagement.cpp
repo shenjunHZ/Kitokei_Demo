@@ -56,13 +56,19 @@ namespace usbVideo
         }
     }
 
+    bool VideoManagement::initVideoManagement(const configuration::bestFrameSize& frameSize)
+    {
+        m_bestFrameSize = frameSize;
+        return true;
+    }
+
     void VideoManagement::runVideoManagement()
     {
         if (not m_streamProcess)
         {
             return;
         }
-        m_streamProcess->initRegister();
+        m_streamProcess->initRegister(m_bestFrameSize);
 
         std::chrono::milliseconds period = std::chrono::milliseconds{ getVideoTimes(m_config) * 1000 * 60 };
 

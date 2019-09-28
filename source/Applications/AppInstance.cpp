@@ -53,7 +53,28 @@ namespace application
         {
             LOG_DEBUG_MSG("Pipe file have exist {}.", pipeFile);
         }
-
+        configuration::bestFrameSize frameSize;
+        if (m_cameraProcess)
+        {
+            m_cameraProcess->initDevice(frameSize);
+        }
+        if (not frameSize.bBestFrame)
+        {
+            frameSize.frameWidth = common::getCaptureWidth(m_config);
+            frameSize.frameHeight = common::getCaptureHeight(m_config);
+        }
+        if (m_videoManagement)
+        {
+            m_videoManagement->initVideoManagement(frameSize);
+        }
+        if (frameSize.bBestFrame)
+        {
+            LOG_INFO_MSG(logger, "Best video frame size width: {}, height: {}.", frameSize.frameWidth, frameSize.frameHeight);
+        }
+        else
+        {
+            LOG_INFO_MSG(logger, "Use configuration video frame size width: {}, height: {}.", frameSize.frameWidth, frameSize.frameHeight);
+        }
     }
 
     void AppInstance::loopFuction()
@@ -65,9 +86,11 @@ namespace application
                 m_cameraProcess->runDevice();
             });
         }
-        m_videoManagement->runVideoManagement(); // last call as open pipe with read mode
+        if (m_videoManagement)
+        {
+            m_videoManagement->runVideoManagement(); // last call as open pipe with read mode
+        }
 
-       // for test catch video
         while (keep_running)
         {
             sleep(1);

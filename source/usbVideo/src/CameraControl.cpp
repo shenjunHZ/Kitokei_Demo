@@ -77,9 +77,10 @@ namespace usbVideo
         return true;
     }
 
-    bool CameraControl::getBestCameraFrameFormat(struct v4l2_fmtdesc& fmtdesc)
+    bool CameraControl::getBestCameraFrameFormat(configuration::bestFrameSize& frameSize)
     {
         int ret = -1;
+        struct v4l2_fmtdesc fmtdesc;
         //  All formats are enumerable by beginning at index zero and incrementing by one until EINVAL is returned.
         fmtdesc.index = 0;
         fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -87,7 +88,7 @@ namespace usbVideo
         {
             fmtdesc.index++;
 
-            LOG_DEBUG_MSG("pixelformat = {} {} {} {}, description = {}",
+            LOG_INFO_MSG(m_logger, "pixelformat = {} {} {} {}, description = {}",
                 fmtdesc.pixelformat & 0xFF,
                 (fmtdesc.pixelformat >> 8) & 0xFF,
                 (fmtdesc.pixelformat >> 16) & 0xFF, 
@@ -99,10 +100,10 @@ namespace usbVideo
                 continue;
             }
 
-            ret = getPixelFormat(fmtdesc);
-            if (not ret)
+            if( not getPixelFormat(fmtdesc, frameSize) )
             {
                 LOG_ERROR_MSG("Unable to get frame sizes.");
+                return false;
             }
         }
         if (errno != EINVAL) 
@@ -111,10 +112,10 @@ namespace usbVideo
             return false;
         }
 
-        return ret;
+        return true;
     }
 
-    bool CameraControl::getPixelFormat(struct v4l2_fmtdesc& fmtdesc)
+    bool CameraControl::getPixelFormat(struct v4l2_fmtdesc& fmtdesc, configuration::bestFrameSize& frameSize)
     {
         int ret = -1;
         struct v4l2_frmsizeenum fsize;
@@ -131,6 +132,12 @@ namespace usbVideo
                     fsize.discrete.width, fsize.discrete.height);
 
                 ret = getFrameIntervals(fsize);
+                if (fsize.discrete.width > frameSize.frameWidth && fsize.discrete.height > frameSize.frameHeight)
+                {
+                    frameSize.frameWidth = fsize.discrete.width;
+                    frameSize.frameHeight = fsize.discrete.height;
+                    frameSize.bBestFrame = true;
+                }
 
                 if (not ret)
                 {
@@ -142,8 +149,14 @@ namespace usbVideo
                 LOG_DEBUG_MSG("continuous: min width = {}, height = {}; max width = {}, height = {}",
                     fsize.stepwise.min_width, fsize.stepwise.min_height,
                     fsize.stepwise.max_width, fsize.stepwise.max_height);
-
                 LOG_DEBUG_MSG("Refusing to enumerate frame intervals.");
+
+                if (fsize.stepwise.max_width > frameSize.frameWidth && fsize.stepwise.max_height > frameSize.frameHeight)
+                {
+                    frameSize.frameWidth = fsize.stepwise.max_width;
+                    frameSize.frameHeight = fsize.stepwise.max_height;
+                    frameSize.bBestFrame = true;
+                }
                 break;
             }
             else if (fsize.type == V4L2_FRMSIZE_TYPE_STEPWISE) 
@@ -153,8 +166,14 @@ namespace usbVideo
                     fsize.stepwise.min_width, fsize.stepwise.min_height,
                     fsize.stepwise.max_width, fsize.stepwise.max_height,
                     fsize.stepwise.step_width, fsize.stepwise.step_height);
-
                 LOG_DEBUG_MSG("Refusing to enumerate frame intervals.");
+
+                if (fsize.stepwise.max_width > frameSize.frameWidth && fsize.stepwise.max_height > frameSize.frameHeight)
+                {
+                    frameSize.frameWidth = fsize.stepwise.max_width;
+                    frameSize.frameHeight = fsize.stepwise.max_height;
+                    frameSize.bBestFrame = true;
+                }
                 break;
             }
             fsize.index++;

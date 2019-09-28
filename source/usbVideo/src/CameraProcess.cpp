@@ -84,7 +84,7 @@ namespace usbVideo
         }
     }
 
-    bool CameraProcess::initDevice()
+    bool CameraProcess::initDevice(configuration::bestFrameSize& frameSize)
     {
         if (m_cameraControl)
         {
@@ -103,8 +103,7 @@ namespace usbVideo
                 return false;
             }
 
-            struct v4l2_fmtdesc fmtdesc;
-            m_cameraControl->getBestCameraFrameFormat(fmtdesc);
+            m_cameraControl->getBestCameraFrameFormat(frameSize);
         }
         return true;
     }
@@ -138,10 +137,6 @@ namespace usbVideo
 
     void CameraProcess::runDevice()
     {
-        if (not initDevice())
-        {
-            return;
-        }
         outputDeviceInfo();
 
         if(m_outputDir.empty())

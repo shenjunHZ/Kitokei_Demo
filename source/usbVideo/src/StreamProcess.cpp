@@ -12,13 +12,13 @@ namespace usbVideo
         m_inputFile = common::getCaptureOutputDir(config) + common::getPipeFileName(config);
     }
 
-    bool StreamProcess::initRegister()
+    bool StreamProcess::initRegister(const configuration::bestFrameSize& frameSize)
     {
         if (not m_EncodeCameraStream)
         {
             return false;
         }
-        return m_EncodeCameraStream->initRegister(m_inputFile);
+        return m_EncodeCameraStream->initRegister(m_inputFile, frameSize);
     }
 
     void StreamProcess::startEncodeStream(const std::string& outputFile)
