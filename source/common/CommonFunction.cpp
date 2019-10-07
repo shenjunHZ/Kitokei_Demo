@@ -73,4 +73,61 @@ namespace common
         return 400 * 1000;
     }
 
+    std::string getVideoName(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::videoName) != config.end())
+        {
+            return config[configuration::videoName].as<std::string>();
+        }
+        return "chessVideo";
+    }
+
+    bool enableAudioWriteToFile(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::enableWriteAudioToFile) != config.end())
+        {
+            return config[configuration::enableWriteAudioToFile].as<bool>();
+        }
+        return true;
+    }
+
+    std::string getAudioName(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::audioName) != config.end())
+        {
+            return config[configuration::audioName].as<std::string>();
+        }
+        return "chessAudio";
+    }
+
+    std::string getAudioDevice(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::audioDevice) != config.end())
+        {
+            return config[configuration::audioDevice].as<std::string>();
+        }
+        return "default";
+    }
+
 } // namespace common
+
+namespace audio
+{
+    int getAudioChannel(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::audioChannel) != config.end())
+        {
+            return config[configuration::audioChannel].as<int>();
+        }
+        return 1;
+    }
+
+    int getAudioSampleRate(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::sampleRate) != config.end())
+        {
+            return config[configuration::sampleRate].as<int>();
+        }
+        return 44100;
+    }
+} // namespace audio

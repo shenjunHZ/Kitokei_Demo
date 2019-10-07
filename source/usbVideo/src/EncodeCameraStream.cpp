@@ -530,6 +530,10 @@ namespace usbVideo
                 if (data_size > PIPE_BUF)
                 {
                     readDataSize = fread(&rgbBuffer[index], 1, PIPE_BUF, m_fd);
+                    if (0 == readDataSize)
+                    {
+                        continue;
+                    }
                     if (readDataSize < PIPE_BUF)
                     {
                         LOG_ERROR_MSG("Error read the data {}, should data {}.", readDataSize, PIPE_BUF);
@@ -601,7 +605,7 @@ namespace usbVideo
                 int ret = av_buffersink_get_frame(m_filterSinkContext, filterFrame);
                 if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
                 {
-                    LOG_DEBUG_MSG("Get sink frame the filter graph EOF.");
+                    //LOG_DEBUG_MSG("Get sink frame the filter graph EOF.");
                     break;
                 }
                 else if (ret < 0)

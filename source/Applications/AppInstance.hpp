@@ -3,7 +3,6 @@
 #include <memory>
 #include "ClientReceiver.hpp"
 #include "Configurations/ParseConfigFile.hpp"
-#include "usbVideo/CameraProcess.hpp"
 
 namespace spdlog
 {
@@ -18,8 +17,14 @@ namespace timerservice
 
 namespace usbVideo
 {
+    class CameraProcess;
     class IVideoManagement;
-}
+} // namespace usbVideo
+
+namespace usbAudio
+{
+    class IAudioRecordService;
+} // namespace usbAudio
 
 namespace application
 {
@@ -34,17 +39,22 @@ namespace application
 
     private:
         void initService(spdlog::logger& logger);
+        void clientDataReceived();
 
     private:
         const configuration::AppConfiguration& m_config;
         std::unique_ptr<timerservice::IOService> m_ioService;
         std::unique_ptr<timerservice::TimerService> m_timerService{};
-        ClientReceiver m_clientReceiver;
 
-        std::unique_ptr<usbVideo::CameraProcess> m_cameraProcess{};
+        ClientReceiver m_clientReceiver;
+        std::thread m_dataReceivedThread;
+
+        std::unique_ptr<usbVideo::CameraProcess> m_cameraProcess;
         std::unique_ptr<usbVideo::IVideoManagement> m_videoManagement;
         std::thread m_cameraProcessThread;
         std::thread m_videoManagementThread;
 
+        std::unique_ptr<usbAudio::IAudioRecordService> m_audioRecordService;
+        std::thread m_audioRecordThread;
     };
 } // namespace application

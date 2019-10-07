@@ -29,9 +29,11 @@ target_link_libraries(${EXECUTABLE_NAME}
         socket
         timer
         usbVideo
+        usbAudio
 )
 
 add_subdirectory ("logger")
 add_subdirectory ("socket")
 add_subdirectory ("timer")
 add_subdirectory ("usbVideo")
+add_subdirectory ("usbAudio")

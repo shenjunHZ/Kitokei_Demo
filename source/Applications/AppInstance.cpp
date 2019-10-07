@@ -4,12 +4,14 @@
 #include "timer/DefaultTimerService.hpp"
 #include "usbVideo/CameraProcess.hpp"
 #include "usbVideo/VideoManagement.hpp"
+#include "usbAudio/AudioRecordService.hpp"
 #include "common/CommonFunction.hpp"
 
 namespace
 {
     std::atomic_bool keep_running{ true };
     constexpr int PipeFileRight = 0666;
+    constexpr int audioSecondsDuration = 15;
 } // namespace 
 namespace application
 {
@@ -21,6 +23,7 @@ namespace application
         , m_clientReceiver{ logger, config, appAddress, *m_timerService }
         , m_cameraProcess{ std::make_unique<usbVideo::CameraProcess>(logger, m_config) }
         , m_videoManagement{ std::make_unique<usbVideo::VideoManagement>(logger, m_config, *m_timerService) }
+        , m_audioRecordService{std::make_unique<usbAudio::AudioRecordService>(logger, m_config)}
     {
         initService(logger);
     }
@@ -28,6 +31,10 @@ namespace application
     AppInstance::~AppInstance()
     {
         usbVideo::CameraProcess::stopRun();
+        if (m_audioRecordService)
+        {
+            m_audioRecordService->exitAudioRecord();
+        }
 
         if (m_cameraProcessThread.joinable())
         {
@@ -75,6 +82,28 @@ namespace application
         {
             LOG_INFO_MSG(logger, "Use configuration video frame size width: {}, height: {}.", frameSize.frameWidth, frameSize.frameHeight);
         }
+
+        if (m_audioRecordService)
+        {
+            m_audioRecordService->initAudioRecord();
+        }
+    }
+
+    void AppInstance::clientDataReceived()
+    {
+        while (keep_running)
+        {
+            std::string dataMessage = m_clientReceiver.getDataMessage();
+
+            if (0 < dataMessage.length())
+            {
+                //LOG_DEBUG_MSG("client received data : {} length: {}", dataMessage.c_str(), dataMessage.length());
+            }
+            else
+            {
+                usleep(1000 * 10);
+            }
+        }
     }
 
     void AppInstance::loopFuction()
@@ -90,14 +119,20 @@ namespace application
         {
             m_videoManagement->runVideoManagement(); // last call as open pipe with read mode
         }
-
-        while (keep_running)
+        
+        if (m_audioRecordService)
+        {
+            m_audioRecordService->audioStartListening(); // to do remove to client data received(start/stop audio)
+        }
+        int index = 0;
+        while (index++ < audioSecondsDuration)
         {
             sleep(1);
-            //LOG_DEBUG_MSG("this is main thread.");
         }
- 
-        return;
+        m_audioRecordService->audioStopListening();
+
+        m_dataReceivedThread = std::thread(&AppInstance::clientDataReceived, this);
+        m_clientReceiver.receiveLoop();
     }
 
 } // namespace applications

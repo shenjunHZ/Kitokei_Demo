@@ -26,7 +26,12 @@ namespace
             (configuration::chessBoardServerAddress, value<std::string>()->default_value("192.168.2.140"), "chess board server ip address.")
             (configuration::chessBoardServerPort,    value<unsigned int>()->default_value(8080),           "chess board server ip port.")
             (configuration::kitokeiLocalAddress,     value<std::string>()->default_value("127.0.0.1"),     "kitokei local ip address.")
-            (configuration::kitokeiLocalPort,        value<unsigned int>()->default_value(8080),           "kitokei local ip port.");
+            (configuration::kitokeiLocalPort,        value<unsigned int>()->default_value(8080),           "kitokei local ip port.")
+            (configuration::audioName, value<std::string>()->default_value("chessName"), "audio file name.")
+            (configuration::enableWriteAudioToFile, value<bool>()->default_value(true), "open write audio file.")
+            (configuration::audioDevice,            value<std::string>()->default_value("default"), "open audio device.")
+            (configuration::audioChannel,           value<int>()->default_value(1), "audio channels.")
+            (configuration::sampleRate,             value<int>()->default_value(44100), "audio sample rate.");
 
         return description;
     }

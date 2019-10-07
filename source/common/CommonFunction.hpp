@@ -15,4 +15,20 @@ namespace common
     int getCaptureHeight(const configuration::AppConfiguration& config);
 
     int getVideoBitRate(const configuration::AppConfiguration& config);
+
+    std::string getVideoName(const configuration::AppConfiguration& config);
+
+    bool enableAudioWriteToFile(const configuration::AppConfiguration& config);
+
+    std::string getAudioName(const configuration::AppConfiguration& config);
+
+    std::string getAudioDevice(const configuration::AppConfiguration& config);
+
 } // namespace common
+
+namespace audio
+{
+    int getAudioChannel(const configuration::AppConfiguration& config);
+
+    int getAudioSampleRate(const configuration::AppConfiguration& config);
+} // namespace audio
