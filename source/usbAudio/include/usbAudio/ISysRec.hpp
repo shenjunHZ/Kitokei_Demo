@@ -1,6 +1,12 @@
 #pragma once
 #include "Configurations/Configurations.hpp"
 
+extern "C"
+{
+#include <alsa/asoundlib.h>
+#include <alsa/pcm.h>
+}
+
 namespace usbAudio
 {
     class ISysRec
@@ -15,15 +21,15 @@ namespace usbAudio
          * @return	return WAVE_MAPPER in windows.
          *          return "default" in linux.
         */
-        virtual configuration::recordDevInfo getDefaultInputDev() = 0;
-        virtual configuration::recordDevInfo setInputDev(const std::string& dev) = 0;
+        virtual configuration::audioDevInfo getDefaultInputDev() = 0;
+        virtual configuration::audioDevInfo setInputDev(const std::string& dev) = 0;
 
         /**
          * @fn
          * @brief	Get the total number of active input devices.
          * @return	the number. 0 means no active device.
          */
-        virtual unsigned int getInputDevNum() = 0;
+        virtual unsigned int getInputDevNum(const snd_pcm_stream_t& stream) = 0;
 
         /**
          * @fn
@@ -55,7 +61,10 @@ namespace usbAudio
          * 	get_default_input_dev()
          */
         virtual int openRecorder(configuration::AudioRecorder& recorder,
-            const configuration::recordDevInfo& devInfo) = 0;
+            const configuration::audioDevInfo& devInfo) = 0;
+
+        virtual int openPlayback(configuration::AudioPlayback& playback,
+            const configuration::audioDevInfo& devInfo) = 0;
 
         /**
          * @fn

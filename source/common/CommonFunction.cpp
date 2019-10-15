@@ -100,6 +100,10 @@ namespace common
         return "chessAudio";
     }
 
+} // namespace common
+
+namespace audio
+{
     std::string getAudioDevice(const configuration::AppConfiguration& config)
     {
         if (config.find(configuration::audioDevice) != config.end())
@@ -109,10 +113,6 @@ namespace common
         return "default";
     }
 
-} // namespace common
-
-namespace audio
-{
     int getAudioChannel(const configuration::AppConfiguration& config)
     {
         if (config.find(configuration::audioChannel) != config.end())
@@ -129,5 +129,14 @@ namespace audio
             return config[configuration::sampleRate].as<int>();
         }
         return 44100;
+    }
+
+    std::string getPlaybackDevice(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::playbackDevice) != config.end())
+        {
+            return config[configuration::playbackDevice].as<std::string>();
+        }
+        return "default";
     }
 } // namespace audio

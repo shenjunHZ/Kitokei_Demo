@@ -22,13 +22,15 @@ namespace common
 
     std::string getAudioName(const configuration::AppConfiguration& config);
 
-    std::string getAudioDevice(const configuration::AppConfiguration& config);
-
 } // namespace common
 
 namespace audio
 {
+    std::string getAudioDevice(const configuration::AppConfiguration& config);
+
     int getAudioChannel(const configuration::AppConfiguration& config);
 
     int getAudioSampleRate(const configuration::AppConfiguration& config);
+
+    std::string getPlaybackDevice(const configuration::AppConfiguration& config);
 } // namespace audio

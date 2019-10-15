@@ -7,6 +7,7 @@ namespace
     const int waitForTimeout = 2;
     const int MAX_WRITE_DATA = 2048;
     const unsigned short SAMPLE_BIT_SIZE = 16;
+    constexpr unsigned short BitsByte = 8;
 } // namespace
 
 namespace usbAudio
@@ -30,7 +31,11 @@ namespace usbAudio
 
     AudioRecordService::~AudioRecordService()
     {
- 
+        if (m_fp)
+        {
+            fclose(m_fp);
+            m_fp = nullptr;
+        }
     }
 
     bool AudioRecordService::initAudioRecord()
@@ -62,10 +67,10 @@ namespace usbAudio
         }
         configuration::WAVEFORMATEX wavfmt = { 
             WAVE_FORMAT_PCM, audioChannel, sampleRate, 
-            sampleRate * audioChannel * SAMPLE_BIT_SIZE / 8,
-            audioChannel* SAMPLE_BIT_SIZE / 8,
+            static_cast<unsigned int>(sampleRate * audioChannel * SAMPLE_BIT_SIZE / BitsByte),
+            static_cast<unsigned short>(audioChannel* SAMPLE_BIT_SIZE / BitsByte),
             SAMPLE_BIT_SIZE,
-            sizeof(configuration::WAVEFORMATEX) };
+            static_cast<unsigned short>(sizeof(configuration::WAVEFORMATEX)) };
         m_sysRec = std::make_unique<LinuxRec>(std::make_unique<configuration::WAVEFORMATEX>(wavfmt));
         // wav fmt chuck head
         m_waveHeader.bits_per_sample   = wavfmt.wBitsPerSample;
@@ -75,9 +80,9 @@ namespace usbAudio
         m_waveHeader.channels          = wavfmt.nChannels;
         m_waveHeader.format_tag        = wavfmt.wFormatTag;
 
-        if (0 == m_sysRec->getInputDevNum())
+        if (0 == m_sysRec->getInputDevNum(SND_PCM_STREAM_CAPTURE))
         {
-            LOG_ERROR_MSG("Have no PCM device can be used.");
+            LOG_ERROR_MSG("Have no record PCM device can be used.");
             return false;
         }
 
@@ -98,8 +103,8 @@ namespace usbAudio
                 return errcode;
             }
 
-            configuration::recordDevInfo devInfo = m_sysRec->getDefaultInputDev(); // to do config
-            devInfo = m_sysRec->setInputDev(common::getAudioDevice(m_config));
+            configuration::audioDevInfo devInfo = m_sysRec->getDefaultInputDev();
+            devInfo = m_sysRec->setInputDev(audio::getAudioDevice(m_config));
             errcode = m_sysRec->openRecorder(m_speechRec.audioRecorder, devInfo);
             if (0 != errcode)
             {
@@ -208,14 +213,14 @@ namespace usbAudio
             }
         }
 
-        LOG_INFO_MSG(m_logger, "Start Record Listening...");
+        LOG_INFO_MSG(m_logger, "....Start Record Listening....");
     }
 
     void AudioRecordService::speechEnd(const configuration::SpeechEndReason& reason)
     {
         if (configuration::SpeechEndReason::END_REASON_VAD_DETECT == reason)
         {
-            LOG_INFO_MSG(m_logger, "Record Speaking done.");
+            LOG_INFO_MSG(m_logger, "Record speaking done.");
         }
         else
         {
@@ -224,29 +229,34 @@ namespace usbAudio
         if (m_fp)
         {
             /* fixed size of wav file header data */
-            m_waveHeader.size_8 += m_waveHeader.data_size + (sizeof(m_waveHeader) - 8);
+            m_waveHeader.chunk_size += m_waveHeader.data_chunk_size + (sizeof(m_waveHeader) - 8);
             /* write the corrected data back to the file header.
             The audio file is in wav format.*/
             fseek(m_fp, 4, 0);
-            fwrite(&m_waveHeader.size_8, sizeof(m_waveHeader.size_8), 1, m_fp); //write size_8 data
+            fwrite(&m_waveHeader.chunk_size, sizeof(m_waveHeader.chunk_size), 1, m_fp); //write size_8 data
             fseek(m_fp, 40, 0); //将文件指针偏移到存储data_size值的位置
-            fwrite(&m_waveHeader.data_size, sizeof(m_waveHeader.data_size), 1, m_fp); //write data_size data
+            fwrite(&m_waveHeader.data_chunk_size, sizeof(m_waveHeader.data_chunk_size), 1, m_fp); //write data_size data
             fseek(m_fp, 0, SEEK_END);
 
             fclose(m_fp);
+            LOG_DEBUG_MSG("....Wirte {} data to wav file....", m_waveHeader.data_chunk_size);
             m_fp = nullptr;
         }
     }
 
     void AudioRecordService::recordCallback(const std::string& data)
     {
-        int errcode = -1;
         if (data.empty()/* || m_speechRec.ep_stat >= MSP_EP_AFTER_SPEECH*/)
         {
             return;
         }
+        if (m_speechRec.speechState < configuration::SpeechState::SPEECH_STATE_STARTED)
+        {
+            LOG_ERROR_MSG("Speech state issue.");
+            return;
+        }
 
-        errcode = writeAudioData(data);
+        int errcode = writeAudioData(data);
         if (errcode < 0)
         {
             endRecordOnError(errcode);
@@ -279,7 +289,7 @@ namespace usbAudio
         }
 
         //size_t writeData = fwrite(data.c_str(), data.size(), 1, m_fp);
-        m_waveHeader.data_size += data.size();
+        m_waveHeader.data_chunk_size += data.size();
 
         return 0;
     }

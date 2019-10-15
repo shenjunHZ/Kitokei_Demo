@@ -5,11 +5,6 @@
 #include "IAudioRecordService.hpp"
 #include "LinuxRec.hpp"
 
-extern "C" 
-{
-
-}
-
 namespace usbAudio
 {
     class AudioRecordService final : public IAudioRecordService

@@ -31,7 +31,8 @@ namespace
             (configuration::enableWriteAudioToFile, value<bool>()->default_value(true), "open write audio file.")
             (configuration::audioDevice,            value<std::string>()->default_value("default"), "open audio device.")
             (configuration::audioChannel,           value<int>()->default_value(1), "audio channels.")
-            (configuration::sampleRate,             value<int>()->default_value(44100), "audio sample rate.");
+            (configuration::sampleRate,             value<int>()->default_value(44100), "audio sample rate.")
+            (configuration::playbackDevice,         value<std::string>()->default_value("default"), "playback audio device.");
 
         return description;
     }

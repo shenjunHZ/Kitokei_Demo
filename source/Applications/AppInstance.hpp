@@ -24,6 +24,7 @@ namespace usbVideo
 namespace usbAudio
 {
     class IAudioRecordService;
+    class IAudioPlaybackService;
 } // namespace usbAudio
 
 namespace application
@@ -55,6 +56,7 @@ namespace application
         std::thread m_videoManagementThread;
 
         std::unique_ptr<usbAudio::IAudioRecordService> m_audioRecordService;
+        std::unique_ptr<usbAudio::IAudioPlaybackService> m_audioPlayabckService;
         std::thread m_audioRecordThread;
     };
 } // namespace application

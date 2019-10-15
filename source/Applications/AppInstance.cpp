@@ -5,13 +5,14 @@
 #include "usbVideo/CameraProcess.hpp"
 #include "usbVideo/VideoManagement.hpp"
 #include "usbAudio/AudioRecordService.hpp"
+#include "usbAudio/AudioPlaybackService.hpp"
 #include "common/CommonFunction.hpp"
 
 namespace
 {
     std::atomic_bool keep_running{ true };
     constexpr int PipeFileRight = 0666;
-    constexpr int audioSecondsDuration = 15;
+    constexpr int AudioSecondsDuration = 30;
 } // namespace 
 namespace application
 {
@@ -24,6 +25,7 @@ namespace application
         , m_cameraProcess{ std::make_unique<usbVideo::CameraProcess>(logger, m_config) }
         , m_videoManagement{ std::make_unique<usbVideo::VideoManagement>(logger, m_config, *m_timerService) }
         , m_audioRecordService{std::make_unique<usbAudio::AudioRecordService>(logger, m_config)}
+       // , m_audioPlayabckService{ std::make_unique<usbAudio::AudioPlaybackService>(logger, m_config) }
     {
         initService(logger);
     }
@@ -34,6 +36,10 @@ namespace application
         if (m_audioRecordService)
         {
             m_audioRecordService->exitAudioRecord();
+        }
+        if (m_audioPlayabckService)
+        {
+            m_audioPlayabckService->exitAudioPlayback();
         }
 
         if (m_cameraProcessThread.joinable())
@@ -87,6 +93,10 @@ namespace application
         {
             m_audioRecordService->initAudioRecord();
         }
+//         if (m_audioPlayabckService)
+//         {
+//             m_audioPlayabckService->initAudioPlayback();
+//         }
     }
 
     void AppInstance::clientDataReceived()
@@ -125,11 +135,16 @@ namespace application
             m_audioRecordService->audioStartListening(); // to do remove to client data received(start/stop audio)
         }
         int index = 0;
-        while (index++ < audioSecondsDuration)
+        while (index++ < AudioSecondsDuration)
         {
             sleep(1);
         }
         m_audioRecordService->audioStopListening();
+
+//         if (m_audioPlayabckService)
+//         {
+//             m_audioPlayabckService->audioStartPlaying();
+//         }
 
         m_dataReceivedThread = std::thread(&AppInstance::clientDataReceived, this);
         m_clientReceiver.receiveLoop();
