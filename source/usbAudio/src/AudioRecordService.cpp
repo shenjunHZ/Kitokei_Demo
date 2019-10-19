@@ -60,7 +60,7 @@ namespace usbAudio
         {
             audioChannel = 2;
         }
-        int sampleRate = 8000; // rate must more than 8000
+        unsigned int sampleRate = 8000; // rate must more than 8000
         if (audio::getAudioSampleRate(m_config) > sampleRate)
         {
             sampleRate = audio::getAudioSampleRate(m_config);
@@ -71,7 +71,7 @@ namespace usbAudio
             static_cast<unsigned short>(audioChannel* SAMPLE_BIT_SIZE / BitsByte),
             SAMPLE_BIT_SIZE,
             static_cast<unsigned short>(sizeof(configuration::WAVEFORMATEX)) };
-        m_sysRec = std::make_unique<LinuxRec>(std::make_unique<configuration::WAVEFORMATEX>(wavfmt));
+        m_sysRec = std::make_unique<LinuxAlsa>(std::make_unique<configuration::WAVEFORMATEX>(wavfmt));
         // wav fmt chuck head
         m_waveHeader.bits_per_sample   = wavfmt.wBitsPerSample;
         m_waveHeader.block_align       = wavfmt.nBlockAlign;
@@ -80,7 +80,7 @@ namespace usbAudio
         m_waveHeader.channels          = wavfmt.nChannels;
         m_waveHeader.format_tag        = wavfmt.wFormatTag;
 
-        if (0 == m_sysRec->getInputDevNum(SND_PCM_STREAM_CAPTURE))
+        if (0 == m_sysRec->getAudioDevNum(SND_PCM_STREAM_CAPTURE))
         {
             LOG_ERROR_MSG("Have no record PCM device can be used.");
             return false;
@@ -92,24 +92,24 @@ namespace usbAudio
 
         if (m_sysRec)
         {
-            errcode = m_sysRec->createRecorder(m_speechRec.audioRecorder, std::bind(&AudioRecordService::recordCallback, this, std::placeholders::_1),
+            errcode = m_sysRec->createALSAAudio(m_speechRec.alsaAudioContext, std::bind(&AudioRecordService::recordCallback, this, std::placeholders::_1),
                 static_cast<void*>(&m_speechRec));
 
             if (0 > errcode)
             {
                 LOG_DEBUG_MSG("create recorder failed: {}", errcode);
-                errcode = static_cast<int>(configuration::RecordErrorCode::RECORD_ERR_RECORDFAIL);
+                errcode = static_cast<int>(configuration::ALSAErrorCode::ALSA_ERR_RECORDFAIL);
                 destroyRecorder();
                 return errcode;
             }
 
-            configuration::audioDevInfo devInfo = m_sysRec->getDefaultInputDev();
-            devInfo = m_sysRec->setInputDev(audio::getAudioDevice(m_config));
-            errcode = m_sysRec->openRecorder(m_speechRec.audioRecorder, devInfo);
+            configuration::audioDevInfo devInfo = m_sysRec->getDefaultDev();
+            devInfo = m_sysRec->setAudioDev(audio::getAudioDevice(m_config));
+            errcode = m_sysRec->openALSAAudio(m_speechRec.alsaAudioContext, devInfo, SND_PCM_STREAM_CAPTURE);
             if (0 != errcode)
             {
                 LOG_DEBUG_MSG("recorder open failed: {}", errcode);
-                errcode = static_cast<int>(configuration::RecordErrorCode::RECORD_ERR_RECORDFAIL);
+                errcode = static_cast<int>(configuration::ALSAErrorCode::ALSA_ERR_RECORDFAIL);
                 destroyRecorder();
                 return errcode;
             }
@@ -126,12 +126,12 @@ namespace usbAudio
     {
         if (nullptr != m_sysRec)
         {
-            if (!m_sysRec->isRecordStopped(m_speechRec.audioRecorder))
+            if (!m_sysRec->isALSAAudioStopped(m_speechRec.alsaAudioContext))
             {
-                m_sysRec->stopRecord(m_speechRec.audioRecorder);
+                m_sysRec->stopALSAAudio(m_speechRec.alsaAudioContext, SND_PCM_STREAM_CAPTURE);
             }
-            m_sysRec->closeRecorder(m_speechRec.audioRecorder);
-            m_sysRec->destroyRecorder(m_speechRec.audioRecorder);
+            m_sysRec->closeALSAAudio(m_speechRec.alsaAudioContext, SND_PCM_STREAM_CAPTURE);
+            m_sysRec->destroyALSAAudio(m_speechRec.alsaAudioContext);
         }
     }
 
@@ -139,7 +139,7 @@ namespace usbAudio
     {
         if (m_sysRec)
         {
-            m_sysRec->destroyRecorder(m_speechRec.audioRecorder);
+            m_sysRec->destroyALSAAudio(m_speechRec.alsaAudioContext);
         }
     }
 
@@ -149,7 +149,7 @@ namespace usbAudio
         if (m_speechRec.speechState >= configuration::SpeechState::SPEECH_STATE_STARTED)
         {
             LOG_DEBUG_MSG("already STARTED.");
-            return static_cast<int>(configuration::RecordErrorCode::RECORD_ERR_ALREADY);
+            return static_cast<int>(configuration::ALSAErrorCode::ALSA_ERR_ALREADY);
         }
         if (nullptr != m_speechRec.notif.onSpeechBegin)
         {
@@ -158,11 +158,11 @@ namespace usbAudio
 
         if (configuration::SpeechAudioSource::SPEECH_MIC == m_speechRec.audioSource && nullptr != m_sysRec)
         {
-            ret = m_sysRec->startRecord(m_speechRec.audioRecorder);
+            ret = m_sysRec->startALSAAudio(m_speechRec.alsaAudioContext, SND_PCM_STREAM_CAPTURE);
             if (ret != 0)
             {
                 LOG_DEBUG_MSG("start record failed: {}", ret);
-                return static_cast<int>(configuration::RecordErrorCode::RECORD_ERR_RECORDFAIL);
+                return static_cast<int>(configuration::ALSAErrorCode::ALSA_ERR_RECORDFAIL);
             }
         }
 
@@ -183,14 +183,14 @@ namespace usbAudio
 
         if (m_speechRec.audioSource == configuration::SpeechAudioSource::SPEECH_MIC && nullptr != m_sysRec)
         {
-            ret = m_sysRec->stopRecord(m_speechRec.audioRecorder);
+            ret = m_sysRec->stopALSAAudio(m_speechRec.alsaAudioContext, SND_PCM_STREAM_CAPTURE);
 
             if (ret != 0)
             {
                 LOG_ERROR_MSG("Stop failed!");
-                return static_cast<int>(configuration::RecordErrorCode::RECORD_ERR_RECORDFAIL);
+                return static_cast<int>(configuration::ALSAErrorCode::ALSA_ERR_RECORDFAIL);
             }
-            waitForRecStop(m_speechRec.audioRecorder, waitForTimeout);
+            waitForRecStop(m_speechRec.alsaAudioContext, waitForTimeout);
         }
         if (nullptr != m_speechRec.notif.onSpeechEnd)
         {
@@ -209,7 +209,7 @@ namespace usbAudio
             if (openOutputAudioFile(outputFile))
             {
                 m_waveHeader.clear();
-                fwrite(&m_waveHeader, sizeof(m_waveHeader), 1, m_fp); //添加wav音频头，使用采样率为16000
+                fwrite(&m_waveHeader, sizeof(m_waveHeader), 1, m_fp);
             }
         }
 
@@ -234,7 +234,7 @@ namespace usbAudio
             The audio file is in wav format.*/
             fseek(m_fp, 4, 0);
             fwrite(&m_waveHeader.chunk_size, sizeof(m_waveHeader.chunk_size), 1, m_fp); //write size_8 data
-            fseek(m_fp, 40, 0); //将文件指针偏移到存储data_size值的位置
+            fseek(m_fp, 40, 0); //file point move to data_size position
             fwrite(&m_waveHeader.data_chunk_size, sizeof(m_waveHeader.data_chunk_size), 1, m_fp); //write data_size data
             fseek(m_fp, 0, SEEK_END);
 
@@ -299,7 +299,7 @@ namespace usbAudio
         if (m_speechRec.audioSource == configuration::SpeechAudioSource::SPEECH_MIC
             && m_sysRec)
         {
-            m_sysRec->stopRecord(m_speechRec.audioRecorder);
+            m_sysRec->stopALSAAudio(m_speechRec.alsaAudioContext, SND_PCM_STREAM_CAPTURE);
         }
         if (m_speechRec.notif.onSpeechEnd)
         {
@@ -315,13 +315,13 @@ namespace usbAudio
     }
 
     /* after stop_record, there are still some data callbacks */
-    void AudioRecordService::waitForRecStop(configuration::AudioRecorder& recorder, unsigned int timeout_ms /*= -1*/)
+    void AudioRecordService::waitForRecStop(configuration::ALSAAudioContext& recorder, unsigned int timeout_ms /*= -1*/)
     {
         if (nullptr == m_sysRec)
         {
             return;
         }
-        while (!m_sysRec->isRecordStopped(recorder))
+        while (!m_sysRec->isALSAAudioStopped(recorder))
         {
             sleep(1);
             if (timeout_ms != (unsigned int)-1)

@@ -33,4 +33,6 @@ namespace audio
     int getAudioSampleRate(const configuration::AppConfiguration& config);
 
     std::string getPlaybackDevice(const configuration::AppConfiguration& config);
+
+    std::string getPlaybackAudioFile(const configuration::AppConfiguration& config);
 } // namespace audio

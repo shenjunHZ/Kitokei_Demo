@@ -4,15 +4,18 @@ project(${MODULE_NAME} CXX)
 message(STATUS "Configuring ${MODULE_NAME}")
 
 set(SOURCES
-        src/LinuxRec.cpp
+        src/LinuxAlsa.cpp
         src/AudioRecordService.cpp
+        src/AudioPlaybackService.cpp
     )
 
 set(HEADERS
-        include/usbAudio/ISysRec.hpp
-        include/usbAudio/LinuxRec.hpp
+        include/usbAudio/ISysAlsa.hpp
+        include/usbAudio/LinuxAlsa.hpp
         include/usbAudio/IAudioRecordService.hpp
         include/usbAudio/AudioRecordService.hpp
+        include/usbAudio/IAudioPlaybackService.hpp
+        include/usbAudio/AudioPlaybackService.hpp
     )
 
 MESSAGE(STATUS ${CMAKE_CURRENT_SOURCE_DIR})
@@ -34,5 +37,5 @@ target_include_directories(usbAudio
 target_link_libraries(${MODULE_NAME}
     PRIVATE
         logger
-        asound
+        -lasound
     )

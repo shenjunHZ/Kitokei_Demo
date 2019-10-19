@@ -139,4 +139,13 @@ namespace audio
         }
         return "default";
     }
+
+    std::string getPlaybackAudioFile(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::readTestAudioFile) != config.end())
+        {
+            return config[configuration::readTestAudioFile].as<std::string>();
+        }
+        return "";
+    }
 } // namespace audio

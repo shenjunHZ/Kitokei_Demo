@@ -12,7 +12,7 @@ namespace
 {
     std::atomic_bool keep_running{ true };
     constexpr int PipeFileRight = 0666;
-    constexpr int AudioSecondsDuration = 30;
+    constexpr int AudioSecondsDuration = 5;
 } // namespace 
 namespace application
 {
@@ -25,7 +25,7 @@ namespace application
         , m_cameraProcess{ std::make_unique<usbVideo::CameraProcess>(logger, m_config) }
         , m_videoManagement{ std::make_unique<usbVideo::VideoManagement>(logger, m_config, *m_timerService) }
         , m_audioRecordService{std::make_unique<usbAudio::AudioRecordService>(logger, m_config)}
-       // , m_audioPlayabckService{ std::make_unique<usbAudio::AudioPlaybackService>(logger, m_config) }
+        , m_audioPlayabckService{ std::make_unique<usbAudio::AudioPlaybackService>(logger, m_config) }
     {
         initService(logger);
     }
@@ -93,10 +93,10 @@ namespace application
         {
             m_audioRecordService->initAudioRecord();
         }
-//         if (m_audioPlayabckService)
-//         {
-//             m_audioPlayabckService->initAudioPlayback();
-//         }
+        if (m_audioPlayabckService)
+        {
+            m_audioPlayabckService->initAudioPlayback();
+        }
     }
 
     void AppInstance::clientDataReceived()
@@ -141,10 +141,10 @@ namespace application
         }
         m_audioRecordService->audioStopListening();
 
-//         if (m_audioPlayabckService)
-//         {
-//             m_audioPlayabckService->audioStartPlaying();
-//         }
+        if (m_audioPlayabckService)
+        {
+            m_audioPlayabckService->audioStartPlaying();
+        }
 
         m_dataReceivedThread = std::thread(&AppInstance::clientDataReceived, this);
         m_clientReceiver.receiveLoop();

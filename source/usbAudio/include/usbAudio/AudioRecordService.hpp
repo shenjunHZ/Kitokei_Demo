@@ -3,7 +3,7 @@
 #include "Configurations/ParseConfigFile.hpp"
 #include "logger/Logger.hpp"
 #include "IAudioRecordService.hpp"
-#include "LinuxRec.hpp"
+#include "LinuxAlsa.hpp"
 
 namespace usbAudio
 {
@@ -43,12 +43,12 @@ namespace usbAudio
         void endRecordOnError(const int& errorCode);
 
         void destroyRecorder();
-        void waitForRecStop(configuration::AudioRecorder& recorder, unsigned int timeout_ms = -1);
+        void waitForRecStop(configuration::ALSAAudioContext& recorder, unsigned int timeout_ms = -1);
 
     private:
         Logger& m_logger;
         const configuration::AppConfiguration& m_config;
-        std::unique_ptr<ISysRec> m_sysRec{};
+        std::unique_ptr<ISysAlsa> m_sysRec{};
         configuration::SpeechRecord m_speechRec;
         std::string m_result{};
 
