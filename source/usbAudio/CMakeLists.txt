@@ -37,5 +37,6 @@ target_include_directories(usbAudio
 target_link_libraries(${MODULE_NAME}
     PRIVATE
         logger
+        socket
         -lasound
     )

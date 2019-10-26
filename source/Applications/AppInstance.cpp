@@ -7,6 +7,7 @@
 #include "usbAudio/AudioRecordService.hpp"
 #include "usbAudio/AudioPlaybackService.hpp"
 #include "common/CommonFunction.hpp"
+#include "socket/ConcreteRTPSession.hpp"
 
 namespace
 {
@@ -107,7 +108,20 @@ namespace application
 
             if (0 < dataMessage.length())
             {
-                //LOG_DEBUG_MSG("client received data : {} length: {}", dataMessage.c_str(), dataMessage.length());
+                if ("start audio" == dataMessage)
+                {
+                    if (m_audioRecordService)
+                    {
+                        m_audioRecordService->audioStartListening();
+                    }
+                }
+                else if("end audio" == dataMessage)
+                {
+                    if (m_audioRecordService)
+                    {
+                        m_audioRecordService->audioStopListening();
+                    }
+                }
             }
             else
             {
@@ -129,17 +143,6 @@ namespace application
         {
             m_videoManagement->runVideoManagement(); // last call as open pipe with read mode
         }
-        
-        if (m_audioRecordService)
-        {
-            m_audioRecordService->audioStartListening(); // to do remove to client data received(start/stop audio)
-        }
-        int index = 0;
-        while (index++ < AudioSecondsDuration)
-        {
-            sleep(1);
-        }
-        m_audioRecordService->audioStopListening();
 
         if (m_audioPlayabckService)
         {

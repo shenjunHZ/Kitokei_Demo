@@ -4,11 +4,11 @@
 #include <sys/socket.h>
 #include <sys/epoll.h>
 #include <cstring>
+#include <boost/exception/diagnostic_information.hpp>
 #include "socket/ClientSocket.hpp"
 #include "logger/Logger.hpp"
-//#include "player/CodeConverter.hpp"
+#include "common/CodeConverter.hpp"
 #include "Configurations/Configurations.hpp"
-#include <boost/exception/diagnostic_information.hpp>
 
 namespace endpoints
 {
@@ -125,7 +125,7 @@ namespace endpoints
             bool bConnectStatus = false;
             do
             {
-                LOG_ERROR_MSG("tcp connection failed. scocke id: {} Error code : {}", m_socketfId, std::strerror(errno));
+                //LOG_ERROR_MSG("tcp connection failed. scocke id: {} Error code : {}", m_socketfId, std::strerror(errno));
                 sleep(5);
                 bConnectStatus = reConnectServer();
             }while(!bConnectStatus);
@@ -148,20 +148,10 @@ namespace endpoints
 
     bool ClientSocket::reConnectServer()
     {
-        int connectStatus = -1;
-
         socklen_t socketLen = sizeof(*m_serverAddr.data());
-        connectStatus = m_socketSysCall.wrapper_tcp_connect(m_socketfId, m_serverAddr.data(), socketLen);
+        int connectStatus = m_socketSysCall.wrapper_tcp_connect(m_socketfId, m_serverAddr.data(), socketLen);
         if(0 != connectStatus)
         {
-            // timer
-            //auto startConnectDuration = std::chrono::milliseconds{1000*10};
-            //stopConcreteTimer();
-            //m_concreteTimer = m_timerService.scheduleTimer(startConnectDuration, [this]()
-            //{
-                //reConnectServer();
-            //});
-
             LOG_ERROR_MSG("tcp connection failed. scocke id: {} Error code : {} status: {}", m_socketfId, std::strerror(errno), connectStatus);
             return false;
         }
@@ -208,8 +198,8 @@ namespace endpoints
         receiveDataRoutine();
     }
 
-    /*F_SETFL：设置文件状态标识
-     * F_GETFD：读取文件描述标识*/
+    /*F_SETFL：set file state flag
+     * F_GETFD：read file description*/
     bool ClientSocket::setNonblocking(int& fd)
     {
         return m_socketSysCall.wrapper_fcntl(fd, F_SETFL, m_socketSysCall.wrapper_fcntl(fd, F_GETFD, 0) | O_NONBLOCK) != -1;
@@ -248,11 +238,6 @@ namespace endpoints
                 LOG_ERROR_MSG("epoll_wait failed. Error: {}", std::strerror(errno));
                 continue;
             }
-            //else if(m_socketClosed)
-            {
-                //sleep(5);
-                //connectServer();
-            }
 
             for (int n = 0; n < nfds; ++n)
             {
@@ -286,16 +271,15 @@ namespace endpoints
         }
         if(size > 0)
         {
-//             LOG_INFO_MSG(m_logger, "Received {} bytes from {} : {}", size,
-//                          m_endpointAddress.ipAddress, m_endpointAddress.portNumber);
-// 
-//             player::CodeConverter codeConverter("gb2312", "utf-8//TRANSLIT//IGNORE");
-//             std::shared_ptr<char*> dataBuffer = std::make_shared<char*>(new char[size * 2 + 1]);
-//             memset(*dataBuffer, 0 , size * 2 + 1);
-// 
-//             codeConverter.decodeCoverter(reinterpret_cast<char*>(receiveDataBuffer.data()), reinterpret_cast<size_t>(size),
-//                                          *dataBuffer, reinterpret_cast<size_t>(size * 2 + 1));
-//             m_dataListener.onDataMessage(*dataBuffer); // to do gsl
+            LOG_INFO_MSG(m_logger, "Received {} bytes from {} : {}", size,
+                         m_endpointAddress.ipAddress, m_endpointAddress.portNumber);
+
+            common::CodeConverter codeConverter("gb2312", "utf-8//TRANSLIT//IGNORE");
+            std::shared_ptr<char*> dataBuffer = std::make_shared<char*>(new char[size * 2 + 1]);
+            memset(*dataBuffer, 0 , size * 2 + 1);
+
+            codeConverter.decodeCoverter(reinterpret_cast<char*>(receiveDataBuffer.data()), size, *dataBuffer, (size * 2 + 1));
+            m_dataListener.onDataMessage(*dataBuffer);
         }
         else
         {

@@ -23,7 +23,7 @@ namespace
             (configuration::V4L2CaptureFormat,         value<std::string>()->default_value("BMP"), "capture format set.")
             (configuration::captureWidth,              value<int>()->default_value(640),           "capture and video format width.")
             (configuration::captureHeight,             value<int>()->default_value(480),           "capture and video format height.")
-            (configuration::chessBoardServerAddress, value<std::string>()->default_value("192.168.2.140"), "chess board server ip address.")
+            (configuration::chessBoardServerAddress, value<std::string>()->default_value("192.168.2.102"), "chess board server ip address.")
             (configuration::chessBoardServerPort,    value<unsigned int>()->default_value(8080),           "chess board server ip port.")
             (configuration::kitokeiLocalAddress,     value<std::string>()->default_value("127.0.0.1"),     "kitokei local ip address.")
             (configuration::kitokeiLocalPort,        value<unsigned int>()->default_value(8080),           "kitokei local ip port.")
@@ -33,7 +33,10 @@ namespace
             (configuration::audioChannel,           value<int>()->default_value(1), "audio channels.")
             (configuration::sampleRate,             value<int>()->default_value(44100), "audio sample rate.")
             (configuration::playbackDevice,         value<std::string>()->default_value("default"), "playback audio device.")
-            (configuration::readTestAudioFile,      value<std::string>()->default_value(""), "playback audio file");
+            (configuration::readTestAudioFile,      value<std::string>()->default_value(""), "playback audio file")
+            (configuration::remoteRTPPort, value<int>()->default_value(9000), "remote rtp port")
+            (configuration::remoteRTPIpAddress, value<std::string>()->default_value("192.168.2.102"), "remote rtp ip address")
+            (configuration::localRTPPort, value<int>()->default_value(9001), "local rtp port");
 
         return description;
     }

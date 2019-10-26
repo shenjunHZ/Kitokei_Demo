@@ -6,6 +6,7 @@ message(STATUS "Configuring ${MODULE_NAME}")
 set(SOURCES
         src/ClientSocket.cpp
         src/SocketSysCall.cpp
+        src/ConcreteRTPSession.cpp
     )
 
 set(HEADERS
@@ -13,6 +14,8 @@ set(HEADERS
         include/socket/IDataListener.hpp
         include/socket/SocketSysCall.hpp
         include/socket/ClientSocket.hpp
+        include/socket/IRTPSession.hpp
+        include/socket/ConcreteRTPSession.hpp
     )
 
 MESSAGE(STATUS ${CMAKE_CURRENT_SOURCE_DIR})
@@ -35,4 +38,5 @@ target_link_libraries(${MODULE_NAME}
     PRIVATE
         logger
         timer
+        -ljrtp
     )

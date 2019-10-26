@@ -115,6 +115,7 @@ namespace usbAudio
             if (ret == 0)
             {
                 alsaAudioContext.alsaState = configuration::ALSAState::ALSA_STATE_STARTING;
+                keep_running = true;
 
                 alsaAudioContext.audioThread = std::thread([this, &alsaAudioContext]()
                 {

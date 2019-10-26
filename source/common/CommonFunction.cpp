@@ -102,6 +102,49 @@ namespace common
 
 } // namespace common
 
+namespace video
+{
+    constexpr int V4l2RequestBuffersCounter = 4;
+
+    std::string getDefaultCameraDevice(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::cameraDevice) != config.end())
+        {
+            return config[configuration::cameraDevice].as<std::string>();
+        }
+        return "/dev/video0";
+    }
+
+    bool getEnableCameraStream(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::enableCameraStream) != config.end())
+        {
+            return config[configuration::enableCameraStream].as<bool>();
+        }
+        return true;
+    }
+
+    int getV4l2RequestBuffersCounter(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::V4l2RequestBuffersCounter) != config.end())
+        {
+            return config[configuration::V4l2RequestBuffersCounter].as<int>();
+        }
+        return V4l2RequestBuffersCounter;
+    }
+
+    std::string getV4L2CaptureFormat(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::V4L2CaptureFormat) != config.end())
+        {
+            return config[configuration::V4L2CaptureFormat].as<std::string>();
+        }
+        return "BMP";
+    }
+
+
+}// namespace video
+
 namespace audio
 {
     std::string getAudioDevice(const configuration::AppConfiguration& config)
@@ -149,3 +192,33 @@ namespace audio
         return "";
     }
 } // namespace audio
+
+namespace rtp
+{
+    int getRTPRemotePort(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::remoteRTPPort) != config.end())
+        {
+            return config[configuration::remoteRTPPort].as<int>();
+        }
+        return 9000;
+    }
+
+    std::string getRTPRemoteIpAddress(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::remoteRTPIpAddress) != config.end())
+        {
+            return config[configuration::remoteRTPIpAddress].as<std::string>();
+        }
+        return "192.168.2.102";
+    }
+
+    int getRTPLocalPort(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::localRTPPort) != config.end())
+        {
+            return config[configuration::localRTPPort].as<int>();
+        }
+        return 9001;
+    }
+} // namespace rtp

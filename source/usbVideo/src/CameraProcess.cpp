@@ -9,44 +9,7 @@
 
 namespace
 {
-    constexpr int V4l2RequestBuffersCounter = 4;
     constexpr int RGBCountSize = 3;
-
-    std::string getDefaultCameraDevice(const configuration::AppConfiguration& config)
-    {
-        if (config.find(configuration::cameraDevice) != config.end())
-        {
-            return config[configuration::cameraDevice].as<std::string>();
-        }
-        return "/dev/video0";
-    }
-
-    bool getEnableCameraStream(const configuration::AppConfiguration& config)
-    {
-        if (config.find(configuration::enableCameraStream) != config.end())
-        {
-            return config[configuration::enableCameraStream].as<bool>();
-        }
-        return true;
-    }
-
-    int getV4l2RequestBuffersCounter(const configuration::AppConfiguration& config)
-    {
-        if (config.find(configuration::V4l2RequestBuffersCounter) != config.end())
-        {
-            return config[configuration::V4l2RequestBuffersCounter].as<int>();
-        }
-        return V4l2RequestBuffersCounter;
-    }
-
-    std::string getV4L2CaptureFormat(const configuration::AppConfiguration& config)
-    {
-        if (config.find(configuration::V4L2CaptureFormat) != config.end())
-        {
-            return config[configuration::V4L2CaptureFormat].as<std::string>();
-        }
-        return "BMP";
-    }
 
     configuration::captureFormat covertV4L2CaptureFormat(const std::string& format)
     {
@@ -57,7 +20,6 @@ namespace
 
         return configuration::captureFormat::CAPTURE_FORMAT_RGB;
     }
-
 } // namespace
 
 namespace usbVideo
@@ -66,13 +28,13 @@ namespace usbVideo
 
     CameraProcess::CameraProcess(Logger& logger, const configuration::AppConfiguration& config)
         : m_logger{ logger }
-        , m_enableCameraStream{ getEnableCameraStream(config) }
+        , m_enableCameraStream{ video::getEnableCameraStream(config) }
         , m_pipeName{ common::getPipeFileName(config) }
         , m_outputDir{ common::getCaptureOutputDir(config) }
-        , m_V4l2RequestBuffersCounter{ getV4l2RequestBuffersCounter(config) }
-        , m_cameraControl(std::make_unique<CameraControl>(logger, getDefaultCameraDevice(config)))
+        , m_V4l2RequestBuffersCounter{ video::getV4l2RequestBuffersCounter(config) }
+        , m_cameraControl(std::make_unique<CameraControl>(logger, video::getDefaultCameraDevice(config)))
     {
-        std::string format = getV4L2CaptureFormat(config);
+        std::string format = video::getV4L2CaptureFormat(config);
         m_captureFormat = covertV4L2CaptureFormat(format);
     }
 

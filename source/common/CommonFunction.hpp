@@ -24,6 +24,18 @@ namespace common
 
 } // namespace common
 
+namespace video
+{
+    std::string getDefaultCameraDevice(const configuration::AppConfiguration& config);
+
+    bool getEnableCameraStream(const configuration::AppConfiguration& config);
+
+    int getV4l2RequestBuffersCounter(const configuration::AppConfiguration& config);
+
+    std::string getV4L2CaptureFormat(const configuration::AppConfiguration& config);
+
+} // namespace video
+
 namespace audio
 {
     std::string getAudioDevice(const configuration::AppConfiguration& config);
@@ -36,3 +48,12 @@ namespace audio
 
     std::string getPlaybackAudioFile(const configuration::AppConfiguration& config);
 } // namespace audio
+
+namespace rtp
+{
+    int getRTPRemotePort(const configuration::AppConfiguration& config);
+
+    std::string getRTPRemoteIpAddress(const configuration::AppConfiguration& config);
+
+    int getRTPLocalPort(const configuration::AppConfiguration& config);
+}// namespace rtp

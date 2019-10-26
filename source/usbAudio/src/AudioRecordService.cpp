@@ -1,6 +1,7 @@
 #include <fstream>
 #include "usbAudio/AudioRecordService.hpp"
 #include "common/CommonFunction.hpp"
+#include "socket/ConcreteRTPSession.hpp"
 
 namespace
 {
@@ -25,8 +26,20 @@ namespace usbAudio
         , m_config { config }
         , m_timeStamp{ std::make_unique<TimeStamp>() }
         , m_fp{nullptr}
+        , m_rtpSession{ std::make_unique<endpoints::ConcreteRTPSession>(logger, m_config) }
     {
+        if (m_rtpSession)
+        {
+            jrtplib::RTPSessionParams rtpSessionParams;
+            rtpSessionParams.SetOwnTimestampUnit(1.0 / audio::getAudioSampleRate(m_config));
+            rtpSessionParams.SetAcceptOwnPackets(true);
+            // IMPORTANT: The local timestamp unit MUST be set, otherwise
+            // RTCP Sender Report info will be calculated wrong
+            // In this case, we'll be sending 10 samples each second, so we'll
+            // put the timestamp unit to (1.0/10.0)
 
+            m_rtpSession->createRTPSession(rtpSessionParams);
+        }
     }
 
     AudioRecordService::~AudioRecordService()
@@ -145,20 +158,16 @@ namespace usbAudio
 
     int AudioRecordService::audioStartListening()
     {
-        int ret = -1;
         if (m_speechRec.speechState >= configuration::SpeechState::SPEECH_STATE_STARTED)
         {
-            LOG_DEBUG_MSG("already STARTED.");
+            LOG_WARNING_MSG("already STARTED.");
             return static_cast<int>(configuration::ALSAErrorCode::ALSA_ERR_ALREADY);
         }
-        if (nullptr != m_speechRec.notif.onSpeechBegin)
-        {
-            m_speechRec.notif.onSpeechBegin();
-        }
+        speechBegin();
 
         if (configuration::SpeechAudioSource::SPEECH_MIC == m_speechRec.audioSource && nullptr != m_sysRec)
         {
-            ret = m_sysRec->startALSAAudio(m_speechRec.alsaAudioContext, SND_PCM_STREAM_CAPTURE);
+            int ret = m_sysRec->startALSAAudio(m_speechRec.alsaAudioContext, SND_PCM_STREAM_CAPTURE);
             if (ret != 0)
             {
                 LOG_DEBUG_MSG("start record failed: {}", ret);
@@ -172,18 +181,15 @@ namespace usbAudio
 
     int AudioRecordService::audioStopListening()
     {
-        int ret = 0;
-        const char* rslt = nullptr;
-
         if (m_speechRec.speechState < configuration::SpeechState::SPEECH_STATE_STARTED)
         {
-            LOG_DEBUG_MSG("Not started or already stopped.");
+            LOG_WARNING_MSG("Not started or already stopped.");
             return 0;
         }
 
         if (m_speechRec.audioSource == configuration::SpeechAudioSource::SPEECH_MIC && nullptr != m_sysRec)
         {
-            ret = m_sysRec->stopALSAAudio(m_speechRec.alsaAudioContext, SND_PCM_STREAM_CAPTURE);
+            int ret = m_sysRec->stopALSAAudio(m_speechRec.alsaAudioContext, SND_PCM_STREAM_CAPTURE);
 
             if (ret != 0)
             {
@@ -192,10 +198,8 @@ namespace usbAudio
             }
             waitForRecStop(m_speechRec.alsaAudioContext, waitForTimeout);
         }
-        if (nullptr != m_speechRec.notif.onSpeechEnd)
-        {
-            m_speechRec.notif.onSpeechEnd(configuration::SpeechEndReason::END_REASON_VAD_DETECT);
-        }
+        speechEnd(configuration::SpeechEndReason::END_REASON_VAD_DETECT);
+
         m_speechRec.speechState = configuration::SpeechState::SPEECH_STATE_INIT;
         return 0;
     }
@@ -262,6 +266,8 @@ namespace usbAudio
             endRecordOnError(errcode);
             return;
         }
+
+        m_rtpSession->sendPacket(data, data.size());
     }
 
     int AudioRecordService::writeAudioData(const std::string& data)
@@ -301,10 +307,7 @@ namespace usbAudio
         {
             m_sysRec->stopALSAAudio(m_speechRec.alsaAudioContext, SND_PCM_STREAM_CAPTURE);
         }
-        if (m_speechRec.notif.onSpeechEnd)
-        {
-            m_speechRec.notif.onSpeechEnd(static_cast<configuration::SpeechEndReason>(errorCode));
-        }
+        speechEnd(static_cast<configuration::SpeechEndReason>(errorCode));
 
         m_speechRec.speechState = configuration::SpeechState::SPEECH_STATE_INIT;
     }

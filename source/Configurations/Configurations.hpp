@@ -9,6 +9,7 @@
 #define V4L2_CONFIG_PREFIX "V4L2"
 #define SOCKET_CONFIG_PREFIX "socket"
 #define AUDIO_CONFIG_PREFIX "audio"
+#define RTP_CONFIG_PREFIX "rtp"
 
 namespace configuration
 {
@@ -36,6 +37,9 @@ namespace configuration
     constexpr auto sampleRate             = AUDIO_CONFIG_PREFIX ".sampleRate";
     constexpr auto playbackDevice         = AUDIO_CONFIG_PREFIX ".playbackDevice";
     constexpr auto readTestAudioFile      = AUDIO_CONFIG_PREFIX ".readTestAudioFile";
+    constexpr auto remoteRTPPort      = RTP_CONFIG_PREFIX ".remoteRTPPort";
+    constexpr auto localRTPPort       = RTP_CONFIG_PREFIX ".localRTPPort";
+    constexpr auto remoteRTPIpAddress = RTP_CONFIG_PREFIX ".remoteRTPIpAddress";
 
  /*****************socket struct**************************/
     struct AppAddresses

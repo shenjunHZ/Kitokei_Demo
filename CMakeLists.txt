@@ -49,6 +49,7 @@ elseif(${ARM})
         "/usr/local/lib"
     )
 
+    #boost library
     set(Boost_MIN_VERSION "1.58.0")
     set(Boost_USE_MULTITHREADED ON)
     find_package(Boost 1.58.0 REQUIRED program_options filesystem)
@@ -59,6 +60,16 @@ elseif(${ARM})
     # lib
     MESSAGE(STATUS "Boost Library Path: ${Boost_LIBRARY_DIRS}")
     LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+
+    #jrtp Library
+    find_package(JRTPLIB REQUIRED)
+
+    # include
+    MESSAGE(STATUS "JRTP Include Path: ${JRTPLIB_INCLUDE_DIRS}")
+    INCLUDE_DIRECTORIES(${JRTPLIB_INCLUDE_DIRS})
+    # lib
+    MESSAGE(STATUS "JRTP Library Path: ${JRTPLIB_LIBRARIES}")
+    LINK_DIRECTORIES(${JRTPLIB_LIBRARIES})
 
 endif()
 

@@ -2,6 +2,7 @@ set(SOURCES
         Main.cpp
         Configurations/ParseConfigFile.cpp
         common/CommonFunction.cpp
+        common/CodeConverter.cpp
         Applications/AppInstance.cpp
         Applications/ClientReceiver.cpp
 )
@@ -10,6 +11,7 @@ set(HEADERS
         Configurations/Configurations.hpp
         Configurations/ParseConfigFile.hpp
         common/CommonFunction.hpp
+        common/CodeConverter.hpp
         Applications/AppInstance.hpp
         Applications/ClientReceiver.hpp
 )

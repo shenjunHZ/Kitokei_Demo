@@ -5,6 +5,11 @@
 #include "IAudioRecordService.hpp"
 #include "LinuxAlsa.hpp"
 
+namespace endpoints
+{
+    class IRTPSession;
+} // namespace endpoints
+
 namespace usbAudio
 {
     class AudioRecordService final : public IAudioRecordService
@@ -56,5 +61,6 @@ namespace usbAudio
         std::unique_ptr<TimeStamp> m_timeStamp;
         FILE* m_fp;
         configuration::wavePCMHeader m_waveHeader;
+        std::unique_ptr<endpoints::IRTPSession> m_rtpSession;
     };
 } // namespace usbAudio

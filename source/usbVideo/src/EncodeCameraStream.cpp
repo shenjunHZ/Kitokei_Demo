@@ -744,4 +744,4 @@ namespace usbVideo
         keep_running = false;
     }
 
-} // 
+} // namespace usbVideo
