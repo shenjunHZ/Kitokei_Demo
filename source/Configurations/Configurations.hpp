@@ -154,7 +154,8 @@ namespace configuration
         ALSA_ERR_RECORDFAIL = -6,
         ALSA_ERR_PLAYBACKFAIL = -7,
         ALSA_ERR_ALREADY = -8,
-        ALSA_ERR_WRITEDATA = -9
+        ALSA_ERR_WRITEDATA = -9,
+        ALSA_ERR_File_Descriptor_Bad_State = -77
     };
 
     /* recorder object. */

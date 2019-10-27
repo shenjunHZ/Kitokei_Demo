@@ -59,6 +59,8 @@ namespace usbAudio
         int pcmWrite(configuration::ALSAAudioContext& alsaAudioContext, const size_t& frameSize);
         int xRunRecovery(configuration::ALSAAudioContext& alsaAudioContext, const snd_pcm_sframes_t& data);
 
+        std::string coverToDescription(const snd_pcm_state_t& state);
+
     private:
         std::shared_ptr<configuration::WAVEFORMATEX> m_waveFormat{};
     };

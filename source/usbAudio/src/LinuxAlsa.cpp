@@ -122,6 +122,11 @@ namespace usbAudio
                     this->createCallbackThread(alsaAudioContext);
                 });
             }
+            if (ALSAErrorCode::ALSA_ERR_File_Descriptor_Bad_State == static_cast<ALSAErrorCode>(ret))
+            {
+                snd_pcm_state_t state = snd_pcm_state(static_cast<snd_pcm_t*>(alsaAudioContext.pcmHandle));
+                LOG_WARNING_MSG("PCM state is {}", coverToDescription(state));
+            }
         }
         else if (SND_PCM_STREAM_PLAYBACK == stream)
         {
@@ -137,7 +142,16 @@ namespace usbAudio
         {
             return -1;
         }
-        int errCode = snd_pcm_start(pcmHandle);
+        /* if the time between this read/write with the last maybe too long,
+        * then the device has already been xrun by the time read/write.
+        * knowing the ALSA driver's default policy for xrun, it is best to call
+        * snd_pcm_prepare to re-prepare the device and then turn it on read/write.
+        */
+        int errCode = snd_pcm_prepare(pcmHandle);
+        if (0 == errCode)
+        {
+            errCode = snd_pcm_start(pcmHandle);
+        }
         if (0 > errCode)
         {
             const char* err = snd_strerror(errCode);
@@ -689,4 +703,31 @@ namespace usbAudio
         }
         return true;
     }
+
+    std::string LinuxAlsa::coverToDescription(const snd_pcm_state_t& state)
+    {
+        switch (state)
+        {
+        case SND_PCM_STATE_OPEN:
+            return "SND_PCM_STATE_OPEN";
+        case SND_PCM_STATE_SETUP:
+            return "SND_PCM_STATE_SETUP";
+        case SND_PCM_STATE_PREPARED:
+            return "SND_PCM_STATE_PREPARED";
+        case SND_PCM_STATE_RUNNING:
+            return "SND_PCM_STATE_RUNNING";
+        case SND_PCM_STATE_XRUN:
+            return "SND_PCM_STATE_XRUN";
+        case SND_PCM_STATE_DRAINING:
+            return "SND_PCM_STATE_DRAINING";
+        case SND_PCM_STATE_PAUSED:
+            return "SND_PCM_STATE_PAUSED";
+        case SND_PCM_STATE_SUSPENDED:
+            return "SND_PCM_STATE_SUSPENDED";
+        case SND_PCM_STATE_DISCONNECTED:
+            return "SND_PCM_STATE_DISCONNECTED";
+        }
+        return "PCM_UNKNOW_STATE";
+    }
+
 } // namespace usbAudio
