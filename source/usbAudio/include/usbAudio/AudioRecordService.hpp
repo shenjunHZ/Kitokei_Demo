@@ -42,13 +42,15 @@ namespace usbAudio
         void speechBegin();
         void speechEnd(const configuration::SpeechEndReason& reason);
 
-        void recordCallback(const std::string& data);
+        void recordCallback(std::string& data);
         int writeAudioData(const std::string& data);
+        int sendAudioData(const std::string& data);
 
         void endRecordOnError(const int& errorCode);
 
         void destroyRecorder();
         void waitForRecStop(configuration::ALSAAudioContext& recorder, unsigned int timeout_ms = -1);
+        bool audioDataConversion(std::string& data);
 
     private:
         Logger& m_logger;

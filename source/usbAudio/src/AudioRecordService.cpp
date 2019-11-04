@@ -1,12 +1,14 @@
 #include <fstream>
 #include "usbAudio/AudioRecordService.hpp"
 #include "common/CommonFunction.hpp"
+#include "common/G711Codec.hpp"
 #include "socket/ConcreteRTPSession.hpp"
 
 namespace
 {
     const int waitForTimeout = 2;
     const int MAX_WRITE_DATA = 2048;
+    const int MAX_SOCKET_DATA = 1046;
     const unsigned short SAMPLE_BIT_SIZE = 16;
     constexpr unsigned short BitsByte = 8;
 } // namespace
@@ -78,13 +80,21 @@ namespace usbAudio
         {
             sampleRate = audio::getAudioSampleRate(m_config);
         }
-        configuration::WAVEFORMATEX wavfmt = { 
-            WAVE_FORMAT_PCM, audioChannel, sampleRate, 
+        configuration::WaveFormatTag waveFormatTag = configuration::WaveFormatTag::WAVE_FORMAT_PCM;
+        std::string audioFormat = audio::getAudioFormat(m_config);
+        if ("G711a" == audioFormat)
+        {
+            waveFormatTag = configuration::WaveFormatTag::WAVE_FORMAT_G711a;
+        }
+
+        configuration::WAVEFORMATEX wavfmt = {
+            static_cast<unsigned short>(waveFormatTag), audioChannel, sampleRate,
             static_cast<unsigned int>(sampleRate * audioChannel * SAMPLE_BIT_SIZE / BitsByte),
             static_cast<unsigned short>(audioChannel* SAMPLE_BIT_SIZE / BitsByte),
             SAMPLE_BIT_SIZE,
-            static_cast<unsigned short>(sizeof(configuration::WAVEFORMATEX)) };
-        m_sysRec = std::make_unique<LinuxAlsa>(std::make_unique<configuration::WAVEFORMATEX>(wavfmt));
+            0 };
+            //static_cast<unsigned short>(sizeof(configuration::WAVEFORMATEX)) };
+        m_sysRec = std::make_unique<LinuxAlsa>(m_logger, std::make_unique<configuration::WAVEFORMATEX>(wavfmt));
         // wav fmt chuck head
         m_waveHeader.bits_per_sample   = wavfmt.wBitsPerSample;
         m_waveHeader.block_align       = wavfmt.nBlockAlign;
@@ -207,9 +217,9 @@ namespace usbAudio
     void AudioRecordService::speechBegin()
     {
         m_result = "";
-        if (common::enableAudioWriteToFile(m_config))
+        if (audio::enableAudioWriteToFile(m_config))
         {
-            std::string outputFile = common::getCaptureOutputDir(m_config) + common::getAudioName(m_config) + "_" + m_timeStamp->now() + ".wav";
+            std::string outputFile = common::getCaptureOutputDir(m_config) + audio::getAudioName(m_config) + "_" + m_timeStamp->now() + ".wav";
             if (openOutputAudioFile(outputFile))
             {
                 m_waveHeader.clear();
@@ -232,13 +242,18 @@ namespace usbAudio
         }
         if (m_fp)
         {
+            m_waveHeader.dwSampleLength = m_waveHeader.data_chunk_size;
             /* fixed size of wav file header data */
             m_waveHeader.chunk_size += m_waveHeader.data_chunk_size + (sizeof(m_waveHeader) - 8);
             /* write the corrected data back to the file header.
             The audio file is in wav format.*/
-            fseek(m_fp, 4, 0);
+            fseek(m_fp, 4, SEEK_SET);
             fwrite(&m_waveHeader.chunk_size, sizeof(m_waveHeader.chunk_size), 1, m_fp); //write size_8 data
-            fseek(m_fp, 40, 0); //file point move to data_size position
+
+            fseek(m_fp, (sizeof(m_waveHeader) - 12), SEEK_SET);
+            fwrite(&m_waveHeader.dwSampleLength, sizeof(m_waveHeader.dwSampleLength), 1, m_fp);
+
+            fseek(m_fp, (sizeof(m_waveHeader) - 4), SEEK_SET); // point move to data_size position
             fwrite(&m_waveHeader.data_chunk_size, sizeof(m_waveHeader.data_chunk_size), 1, m_fp); //write data_size data
             fseek(m_fp, 0, SEEK_END);
 
@@ -248,7 +263,7 @@ namespace usbAudio
         }
     }
 
-    void AudioRecordService::recordCallback(const std::string& data)
+    void AudioRecordService::recordCallback(std::string& data)
     {
         if (data.empty()/* || m_speechRec.ep_stat >= MSP_EP_AFTER_SPEECH*/)
         {
@@ -260,6 +275,10 @@ namespace usbAudio
             return;
         }
 
+        if (not audioDataConversion(data))
+        {
+            LOG_ERROR_MSG("Audio data convert failure, will use original data to save.");
+        }
         int errcode = writeAudioData(data);
         if (errcode < 0)
         {
@@ -267,7 +286,7 @@ namespace usbAudio
             return;
         }
 
-        m_rtpSession->sendPacket(data, data.size());
+        sendAudioData(data);
     }
 
     int AudioRecordService::writeAudioData(const std::string& data)
@@ -384,6 +403,70 @@ namespace usbAudio
             start = strchr(start + 1, '/');
         }
         return true;
+    }
+
+    bool AudioRecordService::audioDataConversion(std::string& data)
+    {
+        std::string audioFormat = audio::getAudioFormat(m_config);
+        std::vector<unsigned char> converData;
+        int dataSize = data.size();
+        converData.resize(dataSize);
+        
+        if ("PCM" == audioFormat)
+        {
+            return true;
+        }
+        else if ("G711a" == audioFormat)
+        {
+            dataSize = audio::PCM2G711a(&converData[0], data.c_str(), data.size());
+            if (dataSize > 0)
+            {
+                converData.resize(dataSize);
+                data.clear();
+                std::copy(converData.begin(), converData.end(), std::back_inserter(data));
+                return true;
+            }
+        }
+        else if ("G711u" == audioFormat)
+        {
+            dataSize = audio::PCM2G711u(&converData[0], data.c_str(), data.size());
+            if (dataSize > 0)
+            {
+                converData.resize(dataSize);
+                data.clear();
+                std::copy(converData.begin(), converData.end(), std::back_inserter(data));
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    int AudioRecordService::sendAudioData(const std::string& data)
+    {
+        if (data.empty())
+        {
+            LOG_ERROR_MSG("audio data is empty.");
+            return 0;
+        }
+        int dataSize = data.size();
+        int index = 0;
+        size_t writeData = 0;
+        while (dataSize > 0)
+        {
+            if (dataSize > MAX_SOCKET_DATA)
+            {
+                m_rtpSession->sendPacket(&data[0 + index * MAX_SOCKET_DATA], MAX_SOCKET_DATA);
+            }
+            else
+            {
+                m_rtpSession->sendPacket(&data[0 + index * MAX_SOCKET_DATA], dataSize);
+            }
+            dataSize -= MAX_SOCKET_DATA;
+            ++index;
+        }
+
+        return 0;
     }
 
 } // namespace usbAudio

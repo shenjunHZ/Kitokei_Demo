@@ -15,6 +15,7 @@ namespace endpoints
         bool deleteRTPDestination(const RTPIPv4Address& rtpAddress) override;
 
         int sendPacket(const std::string& data, const int& len) override;
+        int sendPacket(const std::string& data, const int& len, const unsigned long& timestampinc) override;
         int SendPacket(const std::string& data, const int& len,
             const unsigned char& pt, const bool& mark, const unsigned long& timestampinc) override;
 

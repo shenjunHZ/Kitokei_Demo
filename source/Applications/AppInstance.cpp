@@ -52,7 +52,7 @@ namespace application
     void AppInstance::initService(spdlog::logger& logger)
     {
         std::string outputDir = common::getCaptureOutputDir(m_config);
-        std::string pipeFileName = common::getPipeFileName(m_config);
+        std::string pipeFileName = video::getPipeFileName(m_config);
         std::string pipeFile = outputDir + pipeFileName;
 
         if (not common::isFileExistent(pipeFile))
@@ -74,8 +74,8 @@ namespace application
         }
         if (not frameSize.bBestFrame)
         {
-            frameSize.frameWidth = common::getCaptureWidth(m_config);
-            frameSize.frameHeight = common::getCaptureHeight(m_config);
+            frameSize.frameWidth = video::getCaptureWidth(m_config);
+            frameSize.frameHeight = video::getCaptureHeight(m_config);
         }
         if (m_videoManagement)
         {
@@ -108,14 +108,14 @@ namespace application
 
             if (0 < dataMessage.length())
             {
-                if ("start audio" == dataMessage)
+                if ("start talk" == dataMessage)
                 {
                     if (m_audioRecordService)
                     {
                         m_audioRecordService->audioStartListening();
                     }
                 }
-                else if("end audio" == dataMessage)
+                else if("end talk" == dataMessage)
                 {
                     if (m_audioRecordService)
                     {

@@ -68,7 +68,7 @@ namespace usbVideo
                 onTimeout();
             });
 
-        std::string outputFile = common::getCaptureOutputDir(m_config) + common::getVideoName(m_config) + "_" + m_timeStamp->now() + ".mp4";
+        std::string outputFile = common::getCaptureOutputDir(m_config) + video::getVideoName(m_config) + "_" + m_timeStamp->now() + ".mp4";
         streamThread = std::thread([&m_streamProcess = this->m_streamProcess, outputFile]()
             {
                 m_streamProcess->startEncodeStream(outputFile);
@@ -84,7 +84,7 @@ namespace usbVideo
             streamThread.join();
         }
 
-        std::string outputFile = common::getCaptureOutputDir(m_config) + common::getVideoName(m_config) + "_" + m_timeStamp->now() + ".mp4";
+        std::string outputFile = common::getCaptureOutputDir(m_config) + video::getVideoName(m_config) + "_" + m_timeStamp->now() + ".mp4";
         streamThread = std::thread([&m_streamProcess = this->m_streamProcess, outputFile]()
             {
                 m_streamProcess->startEncodeStream(outputFile);

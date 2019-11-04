@@ -32,6 +32,7 @@ namespace
             (configuration::audioDevice,            value<std::string>()->default_value("default"), "open audio device.")
             (configuration::audioChannel,           value<int>()->default_value(1), "audio channels.")
             (configuration::sampleRate,             value<int>()->default_value(44100), "audio sample rate.")
+            (configuration::audioFormat,            value<std::string>()->default_value("PCM"), "audio format.")
             (configuration::playbackDevice,         value<std::string>()->default_value("default"), "playback audio device.")
             (configuration::readTestAudioFile,      value<std::string>()->default_value(""), "playback audio file")
             (configuration::remoteRTPPort, value<int>()->default_value(9000), "remote rtp port")

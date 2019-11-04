@@ -36,42 +36,11 @@ namespace common
         }
         return "/tmp/cameraCapture/";
     }
+} // namespace common
 
-    std::string getPipeFileName(const configuration::AppConfiguration& config)
-    {
-        if (config.find(configuration::pipeFileName) != config.end())
-        {
-            return config[configuration::pipeFileName].as<std::string>();
-        }
-        return "cameraCapturePipe";
-    }
-
-    int getCaptureWidth(const configuration::AppConfiguration& config)
-    {
-        if (config.find(configuration::captureWidth) != config.end())
-        {
-            return config[configuration::captureWidth].as<int>();
-        }
-        return 640;
-    }
-
-    int getCaptureHeight(const configuration::AppConfiguration& config)
-    {
-        if (config.find(configuration::captureHeight) != config.end())
-        {
-            return config[configuration::captureHeight].as<int>();
-        }
-        return 480;
-    }
-
-    int getVideoBitRate(const configuration::AppConfiguration& config)
-    {
-        if (config.find(configuration::videoBitRate) != config.end())
-        {
-            return config[configuration::videoBitRate].as<int>();
-        }
-        return 400 * 1000;
-    }
+namespace video
+{
+    constexpr int V4l2RequestBuffersCounter = 4;
 
     std::string getVideoName(const configuration::AppConfiguration& config)
     {
@@ -81,30 +50,6 @@ namespace common
         }
         return "chessVideo";
     }
-
-    bool enableAudioWriteToFile(const configuration::AppConfiguration& config)
-    {
-        if (config.find(configuration::enableWriteAudioToFile) != config.end())
-        {
-            return config[configuration::enableWriteAudioToFile].as<bool>();
-        }
-        return true;
-    }
-
-    std::string getAudioName(const configuration::AppConfiguration& config)
-    {
-        if (config.find(configuration::audioName) != config.end())
-        {
-            return config[configuration::audioName].as<std::string>();
-        }
-        return "chessAudio";
-    }
-
-} // namespace common
-
-namespace video
-{
-    constexpr int V4l2RequestBuffersCounter = 4;
 
     std::string getDefaultCameraDevice(const configuration::AppConfiguration& config)
     {
@@ -142,11 +87,54 @@ namespace video
         return "BMP";
     }
 
+    std::string getPipeFileName(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::pipeFileName) != config.end())
+        {
+            return config[configuration::pipeFileName].as<std::string>();
+        }
+        return "cameraCapturePipe";
+    }
 
+    int getCaptureWidth(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::captureWidth) != config.end())
+        {
+            return config[configuration::captureWidth].as<int>();
+        }
+        return 640;
+    }
+
+    int getCaptureHeight(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::captureHeight) != config.end())
+        {
+            return config[configuration::captureHeight].as<int>();
+        }
+        return 480;
+    }
+
+    int getVideoBitRate(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::videoBitRate) != config.end())
+        {
+            return config[configuration::videoBitRate].as<int>();
+        }
+        return 400 * 1000;
+    }
 }// namespace video
 
 namespace audio
 {
+    std::string getAudioName(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::audioName) != config.end())
+        {
+            return config[configuration::audioName].as<std::string>();
+        }
+        return "chessAudio";
+    }
+
     std::string getAudioDevice(const configuration::AppConfiguration& config)
     {
         if (config.find(configuration::audioDevice) != config.end())
@@ -183,6 +171,15 @@ namespace audio
         return "default";
     }
 
+    bool enableAudioWriteToFile(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::enableWriteAudioToFile) != config.end())
+        {
+            return config[configuration::enableWriteAudioToFile].as<bool>();
+        }
+        return true;
+    }
+
     std::string getPlaybackAudioFile(const configuration::AppConfiguration& config)
     {
         if (config.find(configuration::readTestAudioFile) != config.end())
@@ -190,6 +187,15 @@ namespace audio
             return config[configuration::readTestAudioFile].as<std::string>();
         }
         return "";
+    }
+
+    std::string getAudioFormat(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::audioFormat) != config.end())
+        {
+            return config[configuration::audioFormat].as<std::string>();
+        }
+        return "PCM";
     }
 } // namespace audio
 

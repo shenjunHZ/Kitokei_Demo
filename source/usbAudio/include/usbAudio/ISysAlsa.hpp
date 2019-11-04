@@ -37,7 +37,7 @@ namespace usbAudio
          * @return	int	 - Return 0 in success, otherwise return error code.
          */
         virtual int createALSAAudio(configuration::ALSAAudioContext& alsaAudioContext,
-            std::function<void(const std::string& data)> on_data_ind, void* user_cb_para) = 0;
+            std::function<void(std::string& data)> on_data_ind, void* user_cb_para) = 0;
 
         /**
          * @fn

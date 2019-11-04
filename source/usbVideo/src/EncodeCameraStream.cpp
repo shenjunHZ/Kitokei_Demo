@@ -387,7 +387,7 @@ namespace usbVideo
          m_codecContext->height = videoHeight;
          m_codecContext->time_base = {1, getVideoFPS(m_config)};
          m_codecContext->framerate = {getVideoFPS(m_config), 1};
-         m_codecContext->bit_rate = common::getVideoBitRate(m_config);
+         m_codecContext->bit_rate = video::getVideoBitRate(m_config);
          m_codecContext->gop_size = getVideoFPS(m_config) * 2;
          m_codecContext->max_b_frames = maxBframe;
          m_codecContext->pix_fmt = AV_PIX_FMT_YUV420P;

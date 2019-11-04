@@ -1,5 +1,4 @@
 #include "usbAudio/LinuxAlsa.hpp"
-#include "logger/Logger.hpp"
 extern "C"
 {
 #include <alsa/error.h>
@@ -21,8 +20,9 @@ namespace
 using namespace configuration;
 namespace usbAudio
 {
-    LinuxAlsa::LinuxAlsa(std::unique_ptr<configuration::WAVEFORMATEX> waveFormat)
+    LinuxAlsa::LinuxAlsa(Logger& logger, std::unique_ptr<configuration::WAVEFORMATEX> waveFormat)
         : m_waveFormat{ std::move(waveFormat) }
+        , m_logger{logger}
     {
 
     }
@@ -30,7 +30,7 @@ namespace usbAudio
  /***********************API for create recorder and playback****************************************/
     // create recorder use capture
     int LinuxAlsa::createALSAAudio(configuration::ALSAAudioContext& alsaAudioContext,
-        std::function<void(const std::string& data)> onDataInd, void* userCallbackPara)
+        std::function<void(std::string& data)> onDataInd, void* userCallbackPara)
     {
         alsaAudioContext.onDataInd = onDataInd;
         alsaAudioContext.userCallbackPara = userCallbackPara;
@@ -221,7 +221,6 @@ namespace usbAudio
             if (rData > 0)
             {
                 count -= rData;
-                //LOG_DEBUG_MSG("====Write audio data frame: {}", rData);
                 audioData += rData * alsaAudioContext.bitsPerFrame / BitsByte;
             }
         }
@@ -473,7 +472,7 @@ namespace usbAudio
         char* descr = nullptr;
         int cnt = 0;
         std::string filter = stream == SND_PCM_STREAM_CAPTURE ? "Input" : "Output";;
-        LOG_DEBUG_MSG("***********PCM {} Device Infomation**********", filter);
+        LOG_DEBUG_MSG("*****************************PCM {} Device Infomation***********************************", filter);
 
         if (snd_device_name_hint(-1, "pcm", &hints) < 0)
             return 0;
@@ -493,12 +492,14 @@ namespace usbAudio
                 free(io);
             }
             if (name != nullptr)
+            {
                 free(name);
+            }
             n++;
         }
 
         snd_device_name_free_hint(hints);
-        LOG_DEBUG_MSG("***********PCM {} Device Infomation**********", filter);
+        LOG_DEBUG_MSG("**************************PCM {} Device Infomation****************************************", filter);
         return cnt;
     }
 
@@ -654,6 +655,8 @@ namespace usbAudio
             LOG_ERROR_MSG("Unable to install hw params {}.", snd_strerror(ret));
             return false;
         }
+        LOG_INFO_MSG(m_logger, "ALSA audio period frames: {}, buffer frames: {}",
+            alsaAudioContext.periodFrames, alsaAudioContext.bufferFrames);
 
         return true;
     }

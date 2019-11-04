@@ -29,7 +29,7 @@ namespace usbVideo
     CameraProcess::CameraProcess(Logger& logger, const configuration::AppConfiguration& config)
         : m_logger{ logger }
         , m_enableCameraStream{ video::getEnableCameraStream(config) }
-        , m_pipeName{ common::getPipeFileName(config) }
+        , m_pipeName{ video::getPipeFileName(config) }
         , m_outputDir{ common::getCaptureOutputDir(config) }
         , m_V4l2RequestBuffersCounter{ video::getV4l2RequestBuffersCounter(config) }
         , m_cameraControl(std::make_unique<CameraControl>(logger, video::getDefaultCameraDevice(config)))

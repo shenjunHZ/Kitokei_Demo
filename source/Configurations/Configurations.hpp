@@ -37,6 +37,7 @@ namespace configuration
     constexpr auto sampleRate             = AUDIO_CONFIG_PREFIX ".sampleRate";
     constexpr auto playbackDevice         = AUDIO_CONFIG_PREFIX ".playbackDevice";
     constexpr auto readTestAudioFile      = AUDIO_CONFIG_PREFIX ".readTestAudioFile";
+    constexpr auto audioFormat            = AUDIO_CONFIG_PREFIX ".audioFormat";
     constexpr auto remoteRTPPort      = RTP_CONFIG_PREFIX ".remoteRTPPort";
     constexpr auto localRTPPort       = RTP_CONFIG_PREFIX ".localRTPPort";
     constexpr auto remoteRTPIpAddress = RTP_CONFIG_PREFIX ".remoteRTPIpAddress";
@@ -161,7 +162,7 @@ namespace configuration
     /* recorder object. */
     struct ALSAAudioContext
     {
-        std::function<void(const std::string& data)> onDataInd; // record callback
+        std::function<void(std::string& data)> onDataInd; // record callback
         void* userCallbackPara{nullptr};   // save SpeechRecord point
         ALSAState alsaState;           // internal record state
         void* pcmHandle{nullptr};      // snd_pcm_t point
@@ -213,7 +214,13 @@ namespace configuration
     };
 
 #ifndef WAVE_FORMAT_PCM  
-#define WAVE_FORMAT_PCM  1
+
+    enum class WaveFormatTag
+    {
+        WAVE_FORMAT_PCM = 1,
+        WAVE_FORMAT_G711a = 6
+    };
+
     struct WAVEFORMATEX
     {
         unsigned short	  wFormatTag;      // format type
@@ -227,6 +234,8 @@ namespace configuration
     };
 #endif
 
+#pragma pack(push)
+#pragma pack(2)
     /* wav audio header format */
     typedef struct _wave_pcm_hdr
     {
@@ -235,31 +244,40 @@ namespace configuration
         char            wave[4];                // = "WAVE"
         // fmt sub-chunk
         char            fmt[4];                 // = "fmt"
-        int             fmt_chunk_size;         // = the size of the next structure : 16 for PCM
+        int             fmt_chunk_size;         // = the size of the next structure : 16 for PCM, or 18 or 40
         short int       format_tag;             // = PCM : 1
         short int       channels;               // = channel number: Mono = 1, Stereo = 2, etc.
         int             samples_per_sec;        // = sample rate : 8000, 16000, 44100, etc.
         int             avg_bytes_per_sec;      // = bytes per second : samples_per_sec * bits_per_sample / 8 * channels
         short int       block_align;            // = bytes per sampling point : bits_per_sample / 8 * channels
         short int       bits_per_sample;        // = quantized bit number: 8bits, 16bits, etc.
+        short int       cbSize;
+        // fact sub-chunk
+        char            fact[4];
+        int             fact_chunk_size;
+        int             dwSampleLength;
         // data sub-chunk
         char            data[4];                // = "data";
-        int             data_chunk_size;        // = pure data length : FileSize - 44
+        int             data_chunk_size;        // = pure data length : FileSize - 44 for PCM
 
         _wave_pcm_hdr()
             : riff{ 'R', 'I', 'F', 'F' }
             , wave{ 'W', 'A', 'V', 'E' }
             , fmt{ 'f', 'm', 't', ' ' }
+            , fact{'f', 'a', 'c', 't'}
             , data{ 'd', 'a', 't', 'a' }
         {
             chunk_size = 0;
-            fmt_chunk_size = 16;
+            fmt_chunk_size = 18;
             format_tag = 1;
             channels = 1;
             samples_per_sec = 16000;
             avg_bytes_per_sec = 32000;
             block_align = 2;
             bits_per_sample = 16;
+            cbSize = 0;
+
+            fact_chunk_size = 4;
             data_chunk_size = 0;
         }
 
@@ -267,6 +285,9 @@ namespace configuration
         {
             chunk_size = 0;
             data_chunk_size = 0;
+            dwSampleLength = 0;
         }
     } wavePCMHeader;
+
+#pragma pack(pop)
 } // namespace configuration

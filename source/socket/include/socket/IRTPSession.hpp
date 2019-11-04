@@ -14,6 +14,8 @@ namespace endpoints
         virtual bool deleteRTPDestination(const RTPIPv4Address& rtpAddress) = 0;
 
         virtual int sendPacket(const std::string& data, const int& len) = 0;
+        virtual int sendPacket(const std::string& data, const int& len, 
+            const unsigned long& timestampinc) = 0;
         virtual int SendPacket(const std::string& data, const int& len,
             const unsigned char& pt, const bool& mark, const unsigned long& timestampinc) = 0;
 

@@ -3,6 +3,7 @@ set(SOURCES
         Configurations/ParseConfigFile.cpp
         common/CommonFunction.cpp
         common/CodeConverter.cpp
+        common/G711Codec.cpp
         Applications/AppInstance.cpp
         Applications/ClientReceiver.cpp
 )
@@ -12,6 +13,7 @@ set(HEADERS
         Configurations/ParseConfigFile.hpp
         common/CommonFunction.hpp
         common/CodeConverter.hpp
+        common/G711Codec.hpp
         Applications/AppInstance.hpp
         Applications/ClientReceiver.hpp
 )

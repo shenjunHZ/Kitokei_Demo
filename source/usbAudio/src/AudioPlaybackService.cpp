@@ -59,13 +59,21 @@ namespace usbAudio
         {
             sampleRate = audio::getAudioSampleRate(m_config);
         }
+        configuration::WaveFormatTag waveFormatTag = configuration::WaveFormatTag::WAVE_FORMAT_PCM;
+        std::string audioFormat = audio::getAudioFormat(m_config);
+        if ("G711a" == audioFormat)
+        {
+            waveFormatTag = configuration::WaveFormatTag::WAVE_FORMAT_G711a;
+        }
+
         configuration::WAVEFORMATEX wavfmt = {
-            WAVE_FORMAT_PCM, audioChannel, sampleRate,
+            static_cast<unsigned short>(waveFormatTag), audioChannel, sampleRate,
             static_cast<unsigned int>(sampleRate * audioChannel * SAMPLE_BIT_SIZE / BitsByte),
             static_cast<unsigned short>(audioChannel* SAMPLE_BIT_SIZE / BitsByte),
             SAMPLE_BIT_SIZE,
-            static_cast<unsigned short>(sizeof(configuration::WAVEFORMATEX)) };
-        m_sysPlayback = std::make_unique<LinuxAlsa>(std::make_unique<configuration::WAVEFORMATEX>(wavfmt));
+            0 };
+            //static_cast<unsigned short>(sizeof(configuration::WAVEFORMATEX)) };
+        m_sysPlayback = std::make_unique<LinuxAlsa>(m_logger, std::make_unique<configuration::WAVEFORMATEX>(wavfmt));
         // wav fmt chuck head
         m_waveHeader.bits_per_sample = wavfmt.wBitsPerSample;
         m_waveHeader.block_align = wavfmt.nBlockAlign;
