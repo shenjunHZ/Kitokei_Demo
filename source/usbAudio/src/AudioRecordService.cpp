@@ -242,23 +242,24 @@ namespace usbAudio
         }
         if (m_fp)
         {
-            m_waveHeader.dwSampleLength = m_waveHeader.data_chunk_size;
+            m_waveHeader.dwSampleLength = m_waveHeader.data_chunk_size / (SAMPLE_BIT_SIZE / BitsByte);
             /* fixed size of wav file header data */
             m_waveHeader.chunk_size += m_waveHeader.data_chunk_size + (sizeof(m_waveHeader) - 8);
             /* write the corrected data back to the file header.
             The audio file is in wav format.*/
-            fseek(m_fp, 4, SEEK_SET);
+            fseek(m_fp, sizeof(m_waveHeader.riff), SEEK_SET);
             fwrite(&m_waveHeader.chunk_size, sizeof(m_waveHeader.chunk_size), 1, m_fp); //write size_8 data
-
-            fseek(m_fp, (sizeof(m_waveHeader) - 12), SEEK_SET);
+            // point move to dwSampleLength position
+            int offsetPosition = sizeof(m_waveHeader.data_chunk_size) + sizeof(m_waveHeader.data) + sizeof(m_waveHeader.dwSampleLength);
+            fseek(m_fp, (sizeof(m_waveHeader) - offsetPosition), SEEK_SET);
             fwrite(&m_waveHeader.dwSampleLength, sizeof(m_waveHeader.dwSampleLength), 1, m_fp);
-
-            fseek(m_fp, (sizeof(m_waveHeader) - 4), SEEK_SET); // point move to data_size position
-            fwrite(&m_waveHeader.data_chunk_size, sizeof(m_waveHeader.data_chunk_size), 1, m_fp); //write data_size data
+            // point move to data_size position
+            fseek(m_fp, (sizeof(m_waveHeader) - sizeof(m_waveHeader.data_chunk_size)), SEEK_SET); 
+            fwrite(&m_waveHeader.data_chunk_size, sizeof(m_waveHeader.data_chunk_size), 1, m_fp);
             fseek(m_fp, 0, SEEK_END);
 
             fclose(m_fp);
-            LOG_DEBUG_MSG("....Wirte {} data to wav file....", m_waveHeader.data_chunk_size);
+            LOG_DEBUG_MSG("........................Wirte {} pure data to wav file.....................", m_waveHeader.data_chunk_size);
             m_fp = nullptr;
         }
     }
@@ -452,16 +453,18 @@ namespace usbAudio
         int dataSize = data.size();
         int index = 0;
         size_t writeData = 0;
+        unsigned long timestampinc = 1000;
         while (dataSize > 0)
         {
             if (dataSize > MAX_SOCKET_DATA)
             {
-                m_rtpSession->sendPacket(&data[0 + index * MAX_SOCKET_DATA], MAX_SOCKET_DATA);
+                m_rtpSession->sendPacket(&data[0 + index * MAX_SOCKET_DATA], MAX_SOCKET_DATA, timestampinc);
             }
             else
             {
-                m_rtpSession->sendPacket(&data[0 + index * MAX_SOCKET_DATA], dataSize);
+                m_rtpSession->sendPacket(&data[0 + index * MAX_SOCKET_DATA], dataSize, timestampinc);
             }
+            timestampinc = 0;
             dataSize -= MAX_SOCKET_DATA;
             ++index;
         }

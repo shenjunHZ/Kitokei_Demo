@@ -655,8 +655,9 @@ namespace usbAudio
             LOG_ERROR_MSG("Unable to install hw params {}.", snd_strerror(ret));
             return false;
         }
-        LOG_INFO_MSG(m_logger, "ALSA audio period frames: {}, buffer frames: {}",
-            alsaAudioContext.periodFrames, alsaAudioContext.bufferFrames);
+        LOG_INFO_MSG(m_logger, "ALSA audio period time: {}, period frames: {}; buffer time: {}, buffer frames: {}",
+            alsaAudioContext.periodTime, alsaAudioContext.periodFrames, 
+            alsaAudioContext.bufferTime, alsaAudioContext.bufferFrames);
 
         return true;
     }

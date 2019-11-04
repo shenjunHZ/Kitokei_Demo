@@ -244,21 +244,21 @@ namespace configuration
         char            wave[4];                // = "WAVE"
         // fmt sub-chunk
         char            fmt[4];                 // = "fmt"
-        int             fmt_chunk_size;         // = the size of the next structure : 16 for PCM, or 18 or 40
-        short int       format_tag;             // = PCM : 1
+        int             fmt_chunk_size;         // = the size of the next structure: 16, or 18(cbSize) or 40(fact sub-chunk)
+        short int       format_tag;             // = PCM: 1,   G711a: 6,   G711u: 7 etc.
         short int       channels;               // = channel number: Mono = 1, Stereo = 2, etc.
         int             samples_per_sec;        // = sample rate : 8000, 16000, 44100, etc.
         int             avg_bytes_per_sec;      // = bytes per second : samples_per_sec * bits_per_sample / 8 * channels
         short int       block_align;            // = bytes per sampling point : bits_per_sample / 8 * channels
         short int       bits_per_sample;        // = quantized bit number: 8bits, 16bits, etc.
-        short int       cbSize;
+        short int       cbSize;                 // = indicate extend field, 0 means not used
         // fact sub-chunk
-        char            fact[4];
-        int             fact_chunk_size;
-        int             dwSampleLength;
+        char            fact[4];                // = "fact"
+        int             fact_chunk_size;        // = 4
+        int             dwSampleLength;         // Nc * Ns channel-interteaved
         // data sub-chunk
-        char            data[4];                // = "data";
-        int             data_chunk_size;        // = pure data length : FileSize - 44 for PCM
+        char            data[4];                // = "data"
+        int             data_chunk_size;        // = Nc * Ns * bits_per_sample / 8 pure data length : FileSize - 44 for PCM
 
         _wave_pcm_hdr()
             : riff{ 'R', 'I', 'F', 'F' }
@@ -272,9 +272,9 @@ namespace configuration
             format_tag = 1;
             channels = 1;
             samples_per_sec = 16000;
-            avg_bytes_per_sec = 32000;
-            block_align = 2;
             bits_per_sample = 16;
+            avg_bytes_per_sec = samples_per_sec * (bits_per_sample / 8) * channels;
+            block_align = (bits_per_sample / 8) * channels;
             cbSize = 0;
 
             fact_chunk_size = 4;
