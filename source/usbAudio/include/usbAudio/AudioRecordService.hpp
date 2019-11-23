@@ -15,7 +15,7 @@ namespace usbAudio
     class AudioRecordService final : public IAudioRecordService
     {
     public:
-        AudioRecordService(Logger& logger, const configuration::AppConfiguration& config);
+        AudioRecordService(Logger& logger, const configuration::AppConfiguration& config, std::shared_ptr<endpoints::IRTPSession> rtpSession);
         ~AudioRecordService();
         struct TimeStamp
         {
@@ -63,6 +63,6 @@ namespace usbAudio
         std::unique_ptr<TimeStamp> m_timeStamp;
         FILE* m_fp;
         configuration::wavePCMHeader m_waveHeader;
-        std::unique_ptr<endpoints::IRTPSession> m_rtpSession;
+        std::shared_ptr<endpoints::IRTPSession> m_rtpSession;
     };
 } // namespace usbAudio

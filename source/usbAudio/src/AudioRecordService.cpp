@@ -23,12 +23,12 @@ namespace usbAudio
         return string;
     }
 
-    AudioRecordService::AudioRecordService(Logger& logger, const configuration::AppConfiguration& config)
+    AudioRecordService::AudioRecordService(Logger& logger, const configuration::AppConfiguration& config, std::shared_ptr<endpoints::IRTPSession> rtpSession)
         : m_logger{ logger }
         , m_config { config }
         , m_timeStamp{ std::make_unique<TimeStamp>() }
         , m_fp{nullptr}
-        , m_rtpSession{ std::make_unique<endpoints::ConcreteRTPSession>(logger, m_config) }
+        , m_rtpSession{ std::move(rtpSession) }
     {
         if (m_rtpSession)
         {
@@ -226,7 +226,7 @@ namespace usbAudio
                 fwrite(&m_waveHeader, sizeof(m_waveHeader), 1, m_fp);
             }
         }
-
+        m_rtpSession->startRTPPolling();
         LOG_INFO_MSG(m_logger, "....Start Record Listening....");
     }
 
@@ -248,7 +248,7 @@ namespace usbAudio
             /* write the corrected data back to the file header.
             The audio file is in wav format.*/
             fseek(m_fp, sizeof(m_waveHeader.riff), SEEK_SET);
-            fwrite(&m_waveHeader.chunk_size, sizeof(m_waveHeader.chunk_size), 1, m_fp); //write size_8 data
+            fwrite(&m_waveHeader.chunk_size, sizeof(m_waveHeader.chunk_size), 1, m_fp);
             // point move to dwSampleLength position
             int offsetPosition = sizeof(m_waveHeader.data_chunk_size) + sizeof(m_waveHeader.data) + sizeof(m_waveHeader.dwSampleLength);
             fseek(m_fp, (sizeof(m_waveHeader) - offsetPosition), SEEK_SET);

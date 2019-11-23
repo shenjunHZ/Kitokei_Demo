@@ -56,5 +56,7 @@ namespace rtp
 
     std::string getRTPRemoteIpAddress(const configuration::AppConfiguration& config);
 
-    int getRTPLocalPort(const configuration::AppConfiguration& config);
+    int getRTPLocalSendPort(const configuration::AppConfiguration& config);
+
+    int getRTPLocalReceivePort(const configuration::AppConfiguration& config);
 }// namespace rtp

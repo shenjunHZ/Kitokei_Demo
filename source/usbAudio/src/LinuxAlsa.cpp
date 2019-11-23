@@ -248,6 +248,7 @@ namespace usbAudio
         {
             while ((ret = snd_pcm_resume(handle)) == -EAGAIN)
             {
+                LOG_WARNING_MSG("pcm resume wait until the suspend flag is released");
                 usleep(200 * 1000);	/* wait until the suspend flag is released */
             }
             if (ret < 0)

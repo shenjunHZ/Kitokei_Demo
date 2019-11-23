@@ -1,6 +1,7 @@
 #include <fstream>
 #include "usbAudio/AudioPlaybackService.hpp"
 #include "common/CommonFunction.hpp"
+#include "socket/ConcreteRTPSession.hpp"
 
 namespace
 {
@@ -15,10 +16,11 @@ namespace usbAudio
 {
 
 
-    AudioPlaybackService::AudioPlaybackService(Logger& logger, const configuration::AppConfiguration& config)
+    AudioPlaybackService::AudioPlaybackService(Logger& logger, const configuration::AppConfiguration& config, std::shared_ptr<endpoints::IRTPSession> rtpSession)
         : m_logger{ logger }
         , m_config{ config }
         , m_fp{ nullptr }
+        , m_rtpSession{std::move(rtpSession)}
     {
 
     }
@@ -167,7 +169,8 @@ namespace usbAudio
 
         m_speechRec.alsaAudioContext.audioThread = std::thread([this, &alsaAudioContext = m_speechRec.alsaAudioContext]()
         {
-            this->speechStartFromFile();
+            //this->speechStartFromFile();
+            this->speechStartFromRTP();
         });
 
         return 0;
@@ -239,6 +242,7 @@ namespace usbAudio
         LOG_INFO_MSG(m_logger, "....Start pcm playing....");
         size_t size = fread(&m_waveHeader, 1, sizeof(m_waveHeader), m_fp);
         printWavHdr(size);
+        m_rtpSession->startRTPPolling();
     }
 
     void AudioPlaybackService::speechEnd(const configuration::SpeechEndReason& reason)
@@ -267,10 +271,10 @@ namespace usbAudio
             return;
         }
 
-        readAudioData();
+        readFileAudioData();
     }
 
-    int AudioPlaybackService::readAudioData()
+    int AudioPlaybackService::readFileAudioData()
     {
         size_t frames = m_speechRec.alsaAudioContext.periodFrames;
         size_t size = (m_speechRec.alsaAudioContext.periodFrames * m_speechRec.alsaAudioContext.bitsPerFrame / BitsByte);
@@ -328,4 +332,28 @@ namespace usbAudio
         LOG_DEBUG_MSG("nDataBytes: {}", m_waveHeader.data_chunk_size);
     }
 
+    void AudioPlaybackService::speechStartFromRTP()
+    {
+        if (m_speechRec.speechState < configuration::SpeechState::SPEECH_STATE_STARTED)
+        {
+            LOG_ERROR_MSG("Speech state issue.");
+            return;
+        }
+        while (keep_running)
+        {
+            configuration::RTPSessionDatas rtpSessionDatas;
+            m_rtpSession->receivePacket(rtpSessionDatas);
+
+            m_rtpSession->startRTPPolling();
+        }
+    }
+
 } // namespace usbAudio
+
+int usbAudio::AudioPlaybackService::readRTPAudioData(configuration::RTPSessionDatas& rtpSessionDatas)
+{
+    size_t frames = m_speechRec.alsaAudioContext.periodFrames;
+    size_t size = (frames * m_speechRec.alsaAudioContext.bitsPerFrame / BitsByte);
+
+    return 0;
+}

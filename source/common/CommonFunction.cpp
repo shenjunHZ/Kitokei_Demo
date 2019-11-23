@@ -219,12 +219,21 @@ namespace rtp
         return "192.168.2.102";
     }
 
-    int getRTPLocalPort(const configuration::AppConfiguration& config)
+    int getRTPLocalSendPort(const configuration::AppConfiguration& config)
     {
-        if (config.find(configuration::localRTPPort) != config.end())
+        if (config.find(configuration::localSendRTPPort) != config.end())
         {
-            return config[configuration::localRTPPort].as<int>();
+            return config[configuration::localSendRTPPort].as<int>();
         }
-        return 9001;
+        return 9002;
+    }
+
+    int getRTPLocalReceivePort(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::localReceiveRTPPort) != config.end())
+        {
+            return config[configuration::localReceiveRTPPort].as<int>();
+        }
+        return 9004;
     }
 } // namespace rtp

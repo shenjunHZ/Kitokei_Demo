@@ -37,7 +37,8 @@ namespace
             (configuration::readTestAudioFile,      value<std::string>()->default_value(""), "playback audio file")
             (configuration::remoteRTPPort, value<int>()->default_value(9000), "remote rtp port")
             (configuration::remoteRTPIpAddress, value<std::string>()->default_value("192.168.2.102"), "remote rtp ip address")
-            (configuration::localRTPPort, value<int>()->default_value(9001), "local rtp port");
+            (configuration::localSendRTPPort, value<int>()->default_value(9002), "local rtp send port")
+            (configuration::localReceiveRTPPort, value<int>()->default_value(9004), "local rtp receive port");
 
         return description;
     }

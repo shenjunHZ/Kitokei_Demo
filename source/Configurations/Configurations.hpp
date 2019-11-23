@@ -3,6 +3,7 @@
 #include <string>
 #include <thread>
 #include <memory>
+#include <vector>
 
 #define LOG_CONFIG_PREFIX "log"
 #define VIDEO_CONFIG_PREFIX "video"
@@ -38,9 +39,10 @@ namespace configuration
     constexpr auto playbackDevice         = AUDIO_CONFIG_PREFIX ".playbackDevice";
     constexpr auto readTestAudioFile      = AUDIO_CONFIG_PREFIX ".readTestAudioFile";
     constexpr auto audioFormat            = AUDIO_CONFIG_PREFIX ".audioFormat";
-    constexpr auto remoteRTPPort      = RTP_CONFIG_PREFIX ".remoteRTPPort";
-    constexpr auto localRTPPort       = RTP_CONFIG_PREFIX ".localRTPPort";
-    constexpr auto remoteRTPIpAddress = RTP_CONFIG_PREFIX ".remoteRTPIpAddress";
+    constexpr auto localSendRTPPort    = RTP_CONFIG_PREFIX ".localSendRTPPort";
+    constexpr auto remoteRTPPort       = RTP_CONFIG_PREFIX ".remoteRTPPort";
+    constexpr auto remoteRTPIpAddress  = RTP_CONFIG_PREFIX ".remoteRTPIpAddress";
+    constexpr auto localReceiveRTPPort = RTP_CONFIG_PREFIX ".localReceiveRTPPort";
 
  /*****************socket struct**************************/
     struct AppAddresses
@@ -214,7 +216,6 @@ namespace configuration
     };
 
 #ifndef WAVE_FORMAT_PCM  
-
     enum class WaveFormatTag
     {
         WAVE_FORMAT_PCM = 1,
@@ -233,6 +234,14 @@ namespace configuration
                                            // extra information (after cbSize)
     };
 #endif
+
+    struct RTPSessionData
+    {
+        std::vector<std::uint8_t> payloadDatas;
+        std::uint32_t timestamp;
+        std::uint16_t sequenceNumber;
+    };
+    using RTPSessionDatas = std::vector<RTPSessionData>;
 
 #pragma pack(push)
 #pragma pack(2)

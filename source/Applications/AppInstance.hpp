@@ -27,6 +27,11 @@ namespace usbAudio
     class IAudioPlaybackService;
 } // namespace usbAudio
 
+namespace endpoints
+{
+    class IRTPSession;
+} // namespace endpoints
+
 namespace application
 {
     class AppInstance final
@@ -55,6 +60,7 @@ namespace application
         std::thread m_cameraProcessThread;
         std::thread m_videoManagementThread;
 
+        std::shared_ptr<endpoints::IRTPSession> m_rtpSession;
         std::unique_ptr<usbAudio::IAudioRecordService> m_audioRecordService;
         std::unique_ptr<usbAudio::IAudioPlaybackService> m_audioPlayabckService;
         std::thread m_audioRecordThread;

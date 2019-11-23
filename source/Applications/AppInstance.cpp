@@ -25,8 +25,9 @@ namespace application
         , m_clientReceiver{ logger, config, appAddress, *m_timerService }
         , m_cameraProcess{ std::make_unique<usbVideo::CameraProcess>(logger, m_config) }
         , m_videoManagement{ std::make_unique<usbVideo::VideoManagement>(logger, m_config, *m_timerService) }
-        , m_audioRecordService{std::make_unique<usbAudio::AudioRecordService>(logger, m_config)}
-        , m_audioPlayabckService{ std::make_unique<usbAudio::AudioPlaybackService>(logger, m_config) }
+        , m_rtpSession{ std::make_shared<endpoints::ConcreteRTPSession>(logger, m_config) }
+        , m_audioRecordService{std::make_unique<usbAudio::AudioRecordService>(logger, m_config, m_rtpSession)}
+        , m_audioPlayabckService{ std::make_unique<usbAudio::AudioPlaybackService>(logger, m_config, m_rtpSession) }
     {
         initService(logger);
     }
@@ -114,12 +115,22 @@ namespace application
                     {
                         m_audioRecordService->audioStartListening();
                     }
+
+                    if (m_audioPlayabckService)
+                    {
+                        m_audioPlayabckService->audioStartPlaying();
+                    }
                 }
                 else if("end talk" == dataMessage)
                 {
                     if (m_audioRecordService)
                     {
                         m_audioRecordService->audioStopListening();
+                    }
+
+                    if (m_audioPlayabckService)
+                    {
+                        m_audioPlayabckService->audioStopPlaying();
                     }
                 }
             }
@@ -142,11 +153,6 @@ namespace application
         if (m_videoManagement)
         {
             m_videoManagement->runVideoManagement(); // last call as open pipe with read mode
-        }
-
-        if (m_audioPlayabckService)
-        {
-            m_audioPlayabckService->audioStartPlaying();
         }
 
         m_dataReceivedThread = std::thread(&AppInstance::clientDataReceived, this);

@@ -5,12 +5,17 @@
 #include "IAudioPlaybackService.hpp"
 #include "LinuxAlsa.hpp"
 
+namespace endpoints
+{
+    class IRTPSession;
+} // namespace endpoints
+
 namespace usbAudio
 {
     class AudioPlaybackService final : public IAudioPlaybackService
     {
     public:
-        AudioPlaybackService(Logger& logger, const configuration::AppConfiguration& config);
+        AudioPlaybackService(Logger& logger, const configuration::AppConfiguration& config, std::shared_ptr<endpoints::IRTPSession> rtpSession);
         ~AudioPlaybackService();
 
         bool initAudioPlayback() override;
@@ -27,7 +32,9 @@ namespace usbAudio
         void speechEnd(const configuration::SpeechEndReason& reason);
 
         void speechStartFromFile();
-        int readAudioData();
+        void speechStartFromRTP();
+        int readFileAudioData();
+        int readRTPAudioData(configuration::RTPSessionDatas& rtpSessionDatas);
 
         void endPlaybackWithReason(const int& errorCode);
 
@@ -45,5 +52,6 @@ namespace usbAudio
         //std::function<void(const std::string&, const bool&)> registerNotify{};
         FILE* m_fp;
         configuration::wavePCMHeader m_waveHeader;
+        std::shared_ptr<endpoints::IRTPSession> m_rtpSession;
     };
 } // namespace usbAudio

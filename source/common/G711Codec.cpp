@@ -5,19 +5,19 @@ namespace
 {
     constexpr int SEG_SHIFT = 4;        /* Left shift for segment number. */
     constexpr int QUANT_MASK = 0xf;	    /* Quantization field mask. */
-    constexpr int BIAS = 0x84;          /* Bias for linear code. */
     constexpr int SEG_MASK = 0x70;      /* Segment field mask. */
     constexpr int SIGN_BIT = 0x80;      /* Sign bit for a A-law byte. */
     constexpr int NSEGS = 8;            /* Number of A-law segments. */
+    constexpr int BIAS = 0x84;          /* Bias for linear code. */
 
     short seg_end[8] = { 0xFF, 0x1FF, 0x3FF, 0x7FF,
             0xFFF, 0x1FFF, 0x3FFF, 0x7FFF };
 
     int search(short val, short* table, short size)
     {
-        for (int i = 0; i < size; i++)
+        for (short i = 0; i < size; i++)
         {
-            if (val <= *table++)
+            if (val <= table[i])
                 return (i);
         }
         return (size);
@@ -37,20 +37,26 @@ namespace
         else
         {
             mask = 0x55;		/* sign bit = 0 */
-            pcm_val = -pcm_val - 8;
+            pcm_val = -pcm_val - 1;
+            if (pcm_val < 0)
+            {
+                pcm_val = 32767;
+            }
         }
 
         /* Convert the scaled magnitude to segment number. */
-        seg = search(pcm_val, seg_end, 8);
+        seg = search(pcm_val, seg_end, NSEGS);
 
         /* Combine the sign, segment, and quantization bits. */
 
-        if (seg >= 8)		/* out of range, return maximum value. */
+        if (seg >= NSEGS)		/* out of range, return maximum value. */
         {
             return (0x7F ^ mask);
         }
         else
         {
+            /* the following is processed according to the Thirteen - segment method of the table. 
+            The low 4 bits are data, the 5~7 bits are exponents, and the highest bits are symbols */
             aval = seg << SEG_SHIFT;
             if (seg < 2)
             {
@@ -64,14 +70,14 @@ namespace
         }
     }
 
-    int g711aEncode(unsigned char* g711Data, const short* pcmData, int len)
+    int g711aEncode(unsigned char* g711Data, const short* pcmData, const int dataLen)
     {
-        for (int i = 0; i < len; i++)
+        for (int i = 0; i < dataLen; i++)
         {
             g711Data[i] = linear2alaw(pcmData[i]);
         }
 
-        return len;
+        return dataLen;
     }
 
     /* Convert a 16-bit linear PCM value to 8-bit u-law */
@@ -94,14 +100,16 @@ namespace
         }
 
         /* Convert the scaled magnitude to segment number. */
-        seg = search(pcm_val, seg_end, 8);
+        seg = search(pcm_val, seg_end, NSEGS);
 
         /*
          * Combine the sign, segment, quantization bits;
          * and complement the code word.
          */
-        if (seg >= 8)		/* out of range, return maximum value. */
+        if (seg >= NSEGS)		/* out of range, return maximum value. */
+        {
             return (0x7F ^ mask);
+        }
         else
         {
             uval = (seg << 4) | ((pcm_val >> (seg + 3)) & 0xF);
@@ -109,26 +117,26 @@ namespace
         }
     }
 
-    int g711uEncode(unsigned char* g711Data, const short* pcmData, int len)
+    int g711uEncode(unsigned char* g711Data, const short* pcmData, const int dataLen)
     {
-        for (int i = 0; i < len; i++)
+        for (int i = 0; i < dataLen; i++)
         {
             g711Data[i] = linear2ulaw(pcmData[i]);
         }
 
-        return len;
+        return dataLen;
     }
 
     /* Convert an A-law value to 16-bit linear PCM */
-    int alaw2linear(unsigned char a_val)
+    short alaw2linear(unsigned char a_val)
     {
-        int	t;
-        int	seg;
+        short t;
+        short seg;
 
         a_val ^= 0x55;
 
-        t = (a_val & QUANT_MASK) << 4;
-        seg = ((unsigned)a_val & SEG_MASK) >> SEG_SHIFT;
+        t = static_cast<short>((a_val & QUANT_MASK) << 4);
+        seg = static_cast<short>((a_val & SEG_MASK) >> SEG_SHIFT);
         switch (seg)
         {
         case 0:
@@ -144,28 +152,17 @@ namespace
         return ((a_val & SIGN_BIT) ? t : -t);
     }
 
-    int g711aDecode(short* amp, const unsigned char* g711a_data, int g711a_bytes)
+    int g711aDecode(short* pcmData, const unsigned char* g711aData, int g711aBytes)
     {
-        int i;
-        int samples;
-        unsigned char code;
-        int sl;
-
-        for (samples = i = 0; ; )
+        for (int i = 0; i >= g711aBytes; i++)
         {
-            if (i >= g711a_bytes)
-                break;
-            code = g711a_data[i++];
-
-            sl = alaw2linear(code);
-
-            amp[samples++] = (short)sl;
+            pcmData[i] = alaw2linear(g711aData[i]);
         }
-        return samples * 2;
+        return g711aBytes * 2;
     }
 
     /*
-    * ulaw2linear() - Convert a u-law value to 16-bit linear PCM
+    * Convert a u-law value to 16-bit linear PCM
     *
     * First, a biased linear code is derived from the code word. An unbiased
     * output can then be obtained by subtracting 33 from the biased code.
@@ -173,9 +170,9 @@ namespace
     * Note that this function expects to be passed the complement of the
     * original code word. This is in keeping with ISDN conventions.
     */
-    int ulaw2linear(unsigned char u_val)
+    short ulaw2linear(unsigned char u_val)
     {
-        int	t;
+        short t;
 
         /* Complement to obtain normal u-law value. */
         u_val = ~u_val;
@@ -184,43 +181,31 @@ namespace
         * Extract and bias the quantization bits. Then
         * shift up by the segment number and subtract out the bias.
         */
-        t = ((u_val & QUANT_MASK) << 3) + BIAS;
-        t <<= ((unsigned)u_val & SEG_MASK) >> SEG_SHIFT;
+        t = static_cast<short>(((u_val & QUANT_MASK) << 3) + BIAS);
+        t <<= (u_val & SEG_MASK) >> SEG_SHIFT;
 
         return ((u_val & SIGN_BIT) ? (BIAS - t) : (t - BIAS));
     }
 
-    int g711uDecode(short* amp, const unsigned char* g711u_data, int g711u_bytes)
+    int g711uDecode(short* pcmData, const unsigned char* g711uData, int g711uBytes)
     {
-        int i;
-        int samples;
-        unsigned char code;
-        int sl;
-
-        for (samples = i = 0;;)
+        for (int i = 0; i >= g711uBytes; i++)
         {
-            if (i >= g711u_bytes)
-                break;
-            code = g711u_data[i++];
-
-            sl = ulaw2linear(code);
-
-            amp[samples++] = (short)sl;
+            pcmData[i] = ulaw2linear(g711uData[i]);
         }
-        return samples * 2;
+        return g711uBytes * 2;
     }
 } // namespace
 namespace audio
 {
     /*
      * function: convert PCM audio format to g711 alaw/ulaw
-     *	 InAudioData:	PCM data prepared to encode
-     *   OutAudioData:	encoded g711 alaw/ulaw.
-     *   DataLen:		PCM data size.
+     *	 inAudioData:	PCM data prepared to encode
+     *   outAudioData:	encoded to g711
+     *   dataLen:		PCM data size
      */
 
-     /*alaw*/
-    int PCM2G711a(unsigned char* outAudioData, const char* inAudioData, int dataLen)
+    int PCM2G711a(unsigned char* outAudioData, const char* inAudioData, const int dataLen)
     {
         if ((nullptr == outAudioData) or (nullptr == inAudioData) or (0 == dataLen))
         {
@@ -231,8 +216,7 @@ namespace audio
         return g711aEncode((unsigned char*)outAudioData, (short*)inAudioData, dataLen / 2);
     }
 
-    /*ulaw*/
-    int PCM2G711u(unsigned char *outAudioData, const char *inAudioData, int dataLen)
+    int PCM2G711u(unsigned char *outAudioData, const char *inAudioData, const int dataLen)
     {
         if ((nullptr == outAudioData) or (nullptr == inAudioData) or (0 == dataLen))
         {
@@ -244,14 +228,13 @@ namespace audio
     }
 
     /*
-     * function: convert g711 alaw audio format to PCM.
-     *	 InAudioData:	g711 alaw data prepared to decode
-     *   OutAudioData:	decode PCM audio data.
-     *   DataLen:		g711a data size.
+     * function: convert g711 alaw/ulaw audio format to PCM.
+     *	 inAudioData:	g711 data prepared to decode
+     *   outAudioData:	decode PCM audio data.
+     *   dataLen:		g711 data size.
      */
 
-     /*alaw*/
-    int G711a2PCM(char* outAudioData, const char* inAudioData, int dataLen)
+    int G711a2PCM(char* outAudioData, const char* inAudioData, const int dataLen)
     {
         if ((nullptr == inAudioData) or (nullptr == outAudioData) or (0 == dataLen))
         {
@@ -262,16 +245,15 @@ namespace audio
         return g711aDecode((short*)outAudioData, (unsigned char*)inAudioData, dataLen);
     }
 
-    /*ulaw*/
-    int G711u2PCM(char *OutAudioData, const char *InAudioData, int DataLen)
+    int G711u2PCM(char* outAudioData, const char* inAudioData, const int dataLen)
     {
-        if ((nullptr == InAudioData) or (nullptr == OutAudioData) or (0 == DataLen))
+        if ((nullptr == outAudioData) or (nullptr == inAudioData) or (0 == dataLen))
         {
             LOG_ERROR_MSG("Error, empty data or transmit failed, exit !");
             return -1;
         }
 
-        return g711uDecode((short*)OutAudioData, (unsigned char *)InAudioData, DataLen);
+        return g711uDecode(reinterpret_cast<short*>(outAudioData), reinterpret_cast<const unsigned char*>(inAudioData), dataLen);
     }
 
-} // namespace common
+} // namespace audio

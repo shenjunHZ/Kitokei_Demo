@@ -1,5 +1,4 @@
 #pragma once
-#include <jrtplib3/rtpsession.h>
 #include "IRTPSession.hpp"
 #include "logger/Logger.hpp"
 #include "Configurations/ParseConfigFile.hpp"
@@ -10,23 +9,26 @@ namespace endpoints
     {
     public:
         ConcreteRTPSession(Logger& logger, const configuration::AppConfiguration& config);
-        bool createRTPSession(const RTPSessionParams& rtpSessionParams) override;
-        bool addRTPDestination(const RTPIPv4Address& rtpAddress) override;
-        bool deleteRTPDestination(const RTPIPv4Address& rtpAddress) override;
-
+        ~ConcreteRTPSession();
+        bool createRTPSession(RTPSessionParams& rtpSessionParams) override;
+        bool startRTPPolling() override;
         int sendPacket(const std::string& data, const int& len) override;
         int sendPacket(const std::string& data, const int& len, const unsigned long& timestampinc) override;
         int SendPacket(const std::string& data, const int& len,
             const unsigned char& pt, const bool& mark, const unsigned long& timestampinc) override;
+        int receivePacket(configuration::RTPSessionDatas& rtpSessionData) override;
 
     private:
         bool setSessionDefault();
+        bool addRTPDestination(const RTPIPv4Address& rtpAddress);
+        bool deleteRTPDestination(const RTPIPv4Address& rtpAddress);
 
     private:
         Logger& m_logger;
         const configuration::AppConfiguration& m_config;
 
-        jrtplib::RTPSession m_rtpSession;
+        jrtplib::RTPSession m_rtpSendSession;
+        jrtplib::RTPSession m_rtpReceiveSession;
         jrtplib::RTPUDPv4TransmissionParams m_rtpTransmissionParams;
     };
 } // namespace endpoints
