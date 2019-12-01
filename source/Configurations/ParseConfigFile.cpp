@@ -23,6 +23,7 @@ namespace
             (configuration::V4L2CaptureFormat,         value<std::string>()->default_value("BMP"), "capture format set.")
             (configuration::captureWidth,              value<int>()->default_value(640),           "capture and video format width.")
             (configuration::captureHeight,             value<int>()->default_value(480),           "capture and video format height.")
+            (configuration::filterDescr,               value<std::string>()->default_value(""),    "ttf file for avfilter.")
             (configuration::chessBoardServerAddress, value<std::string>()->default_value("192.168.2.102"), "chess board server ip address.")
             (configuration::chessBoardServerPort,    value<unsigned int>()->default_value(8080),           "chess board server ip port.")
             (configuration::kitokeiLocalAddress,     value<std::string>()->default_value("127.0.0.1"),     "kitokei local ip address.")

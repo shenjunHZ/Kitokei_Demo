@@ -29,6 +29,8 @@ namespace video
 
     int getVideoBitRate(const configuration::AppConfiguration& config);
 
+    std::string getFilterDescr(const configuration::AppConfiguration& config);
+
 } // namespace video
 
 namespace audio

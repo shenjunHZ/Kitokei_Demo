@@ -122,6 +122,15 @@ namespace video
         }
         return 400 * 1000;
     }
+
+    std::string getFilterDescr(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::filterDescr) != config.end())
+        {
+            return config[configuration::filterDescr].as<std::string>();
+        }
+        return "";
+    }
 }// namespace video
 
 namespace audio

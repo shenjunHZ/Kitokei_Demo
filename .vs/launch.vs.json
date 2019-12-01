@@ -1,0 +1,42 @@
+{
+    "version": "0.2.1",
+    "defaults": {},
+    "configurations": [
+        {
+            "type": "cppdbg",
+            "name": "Kitokei_Demo (source\\Kitokei_Demo)",
+            "project": "CMakeLists.txt",
+            "projectTarget": "Kitokei_Demo (source\\Kitokei_Demo)",
+            "cwd": "${debugInfo.remoteWorkspaceRoot}",
+            "program": "${debugInfo.fullTargetPath}",
+            "MIMode": "gdb",
+            "externalConsole": true,
+            "remoteMachineName": "${debugInfo.remoteMachineName}",
+            "pipeTransport": {
+                "pipeProgram": "${debugInfo.shellexecPath}",
+                "pipeArgs": [
+                    "/s",
+                    "${debugInfo.remoteMachineId}",
+                    "/p",
+                    "${debugInfo.parentProcessId}",
+                    "/c",
+                    "${debuggerCommand}",
+                    "--tty=${debugInfo.tty}"
+                ],
+                "debuggerPath": "/usr/bin/gdb"
+            },
+            "setupCommands": [
+                {
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "visualizerFile": "${debugInfo.linuxNatvisPath}",
+            "showDisplayString": true,
+            "args": [
+                "--config",
+                "/home/khadas/development/remoteBuildRoot/Kitokei_Demo/linux-release/configuration.ini"
+            ]
+        }
+    ]
+}

@@ -27,6 +27,7 @@ namespace configuration
     constexpr auto V4L2CaptureFormat         = V4L2_CONFIG_PREFIX ".V4L2CaptureFormat";
     constexpr auto captureWidth              = V4L2_CONFIG_PREFIX ".captureWidth";
     constexpr auto captureHeight             = V4L2_CONFIG_PREFIX ".captureHeight";
+    constexpr auto filterDescr               = V4L2_CONFIG_PREFIX ".filterDescr";
     constexpr auto chessBoardServerAddress = SOCKET_CONFIG_PREFIX ".chessBoardServerAddress";
     constexpr auto chessBoardServerPort    = SOCKET_CONFIG_PREFIX ".chessBoardServerPort";
     constexpr auto kitokeiLocalAddress     = SOCKET_CONFIG_PREFIX ".kitokeiLocalAddress";

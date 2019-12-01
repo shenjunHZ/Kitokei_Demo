@@ -121,7 +121,7 @@ namespace application
                         m_audioPlayabckService->audioStartPlaying();
                     }
                 }
-                else if("end talk" == dataMessage)
+                else if("stop talk" == dataMessage)
                 {
                     if (m_audioRecordService)
                     {

@@ -31,17 +31,8 @@ endif()
 
 # according to the compile env
 
-if(${NSN_LINUX})
+if(${ARM})
     INCLUDE_DIRECTORIES(
-        "/home/junshen/cplane/trunk_cprt/sdk5g/prefix_root_NATIVE-gcc/usr/include"
-    )
-    LINK_DIRECTORIES(
-        "/home/junshen/cplane/trunk_cprt/sdk5g/prefix_root_NATIVE-gcc/usr/lib"
-    )
-
-elseif(${ARM})
-    INCLUDE_DIRECTORIES(
-        "/home/junshen/tools/spdlog-1.x/include"
         "/usr/local/include"
     )
 
@@ -70,7 +61,6 @@ elseif(${ARM})
     # lib
     MESSAGE(STATUS "JRTP Library Path: ${JRTPLIB_LIBRARIES}")
     LINK_DIRECTORIES(${JRTPLIB_LIBRARIES})
-
 endif()
 
  set(COMMON_FLAGS ${CMAKE_CXX_FLAGS})

@@ -238,7 +238,7 @@ namespace usbVideo
         //std::string filtersDescr = "drawtext=fontfile=arial.ttf:fontcolor=white:fontsize=36:text='ABCD':x=20:y=20";
         //std::string filtersDescr = "drawbox=x=100:y=100:w=100:h=100:color=pink@0.5";
         //std::string filtersDescr = "crop=1/2*in_w:1/2*in_h:0:0";
-        std::string filtersDescr = "drawtext=fontfile=/usr/share/fonts/truetype/ubuntu-font-family/lato/Lato-Black.ttf:fontcolor=white:fontsize=36:text='Chess Kitokei':x=18:y=200";
+        std::string filtersDescr = "drawtext=fontfile=" + video::getFilterDescr(m_config) + ":fontcolor=white:fontsize=36:text='Chess Kitokei':x=18:y=200";
 
         enum AVPixelFormat pix_fmts[] = { AV_PIX_FMT_YUV420P, AV_PIX_FMT_NONE };
 

@@ -44,22 +44,10 @@ target_link_libraries(${MODULE_NAME}
     PRIVATE
         logger
         timer
-        avformat
         avdevice
-        avcodec
-        avutil
         avfilter
-        postproc
-        swresample
+        avformat
+        avcodec
         swscale
-        -lpthread
-        -ldl
-        -lbz2
-        -lm -lz
-        -llzma
-        -lgnutls
-        -ldrm
-        -lrockchip_mpp
+        avutil
     )
- #libz.a
- #libm.a
