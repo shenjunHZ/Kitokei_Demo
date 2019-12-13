@@ -27,7 +27,7 @@
             "remoteCopySources": true,
             "remoteCopySourcesOutputVerbosity": "Normal",
             "remoteCopySourcesConcurrentCopies": "10",
-            "remoteCopySourcesMethod": "rsync",
+            "remoteCopySourcesMethod": "sftp",
             "remoteCopySourcesExclusionList": [
                 ".vs",
                 ".git"

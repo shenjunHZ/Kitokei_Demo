@@ -21,6 +21,12 @@ namespace endpoints
 {
     using IpEndpoint = boost::asio::ip::detail::endpoint;
     using Address = boost::asio::ip::address;
+	typedef enum class eLinkStatus
+	{
+		LINK_STATUS_INIT = 0,
+		LINK_STATUS_BIND = 1,
+		LINK_STATUS_CONNECTED = 2
+	}LinkStatus;
 
     class ClientSocket final
     {
@@ -76,5 +82,6 @@ namespace endpoints
         endpoints::IDataListener& m_dataListener;
         timerservice::TimerService& m_timerService;
         std::unique_ptr<timerservice::Timer> m_concreteTimer;
+		LinkStatus linkStatus;
     };
 } // namespace cp_nb

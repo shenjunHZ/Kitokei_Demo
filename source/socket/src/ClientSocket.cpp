@@ -1,9 +1,13 @@
 //
 // Created by junshen on 9/29/18.
 //
+#include <cstring>
 #include <sys/socket.h>
 #include <sys/epoll.h>
-#include <cstring>
+#include <stdexcept>
+#include <boost/asio/ip/host_name.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/io_service.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include "socket/ClientSocket.hpp"
 #include "logger/Logger.hpp"
@@ -18,9 +22,42 @@ namespace endpoints
         std::atomic_bool keep_connect(true);
     } // namespace
 
+    std::string getIpAddressByHostname(const std::string& hostName)
+    try
+    {
+        using namespace boost::asio::ip;
+        tcp::resolver::query query(hostName, "");
+
+        boost::asio::io_service ioService;
+        const auto resolvedIterator = tcp::resolver(ioService).resolve(query);
+        while (resolvedIterator != tcp::resolver::iterator())
+        {
+            tcp::endpoint endpoint = *resolvedIterator;
+			boost::asio::ip::address address;
+			address.from_string(endpoint.address().to_string());
+			if (address.is_v4())
+			{
+				return endpoint.address().to_string();
+			}
+        }
+        BOOST_THROW_EXCEPTION(std::runtime_error("Unable to resolve " + hostName + " with boost tcp resolver"));
+    }
+    catch (const boost::system::system_error& e)
+    {
+        BOOST_THROW_EXCEPTION(
+            std::runtime_error("Error while trying to resolve " + hostName + " with boost tcp resolver: " + e.what()));
+    }
+
     auto createServerAdd(const std::string &ipAddress, unsigned int portNumber)
     {
-        Address address = Address::from_string(ipAddress);
+        std::string ipAdd = ipAddress;
+        if (ipAdd.empty())
+        {
+			ipAdd = getIpAddressByHostname(boost::asio::ip::host_name());
+			LOG_DEBUG_MSG("To solve host ip address: {} link to tcp service.", ipAdd);
+        }
+		
+        Address address = Address::from_string(ipAdd);
         return IpEndpoint(address, portNumber);
     }
 } // namespace endpoint
@@ -43,6 +80,7 @@ namespace endpoints
     , m_localAddr{createServerAdd(appAddress.kitokeiLocalAddress, appAddress.kitokeiLocalPort)}
     , m_dataListener{dataListener}
     , m_timerService{timerService}
+	, linkStatus(eLinkStatus::LINK_STATUS_INIT)
     {
         LOG_INFO_MSG(m_logger, "Createing tcp endpoint to {} : {}",
                      appAddress.chessBoardServerAddress, appAddress.chessBoardServerPort);
@@ -53,7 +91,8 @@ namespace endpoints
         //auto const ret = 1;
         if(0 > ret)
         {
-            LOG_INFO_MSG(m_logger, "tcp socket bind error code : {}", std::strerror(errno));
+            LOG_INFO_MSG(m_logger, "tcp socket bind {}:{} error code : {}", 
+				m_localAddr.address().to_string(), m_localAddr.port(), std::strerror(errno));
             rebindSocketToAnyPort();
         }
         else
@@ -61,7 +100,7 @@ namespace endpoints
             LOG_INFO_MSG(m_logger, "binding tcp local endpoint success! {} : {}",
                          m_localAddr.address().to_string(), m_localAddr.port());
         }
-
+		linkStatus = eLinkStatus::LINK_STATUS_BIND;
     }
 
     ClientSocket::~ClientSocket()
@@ -88,13 +127,12 @@ namespace endpoints
         const auto ret = m_socketSysCall.wrapper_tcp_bind(m_socketfId, clientAddr.data(), socketLen);
         if (ret < 0)
         {
-            const auto& errorMsg = std::string("tcp socket bind ANY. Error: ") + std::strerror(errno);
-            LOG_ERROR_MSG(errorMsg.c_str());
-
-            BOOST_THROW_EXCEPTION(std::runtime_error(errorMsg));
+            LOG_ERROR_MSG("tcp socket bind ANY. Error: {}", std::strerror(errno));
+			return;
         }
         LOG_INFO_MSG(m_logger, "Binding SCTP local endpoint to any success! {} : {}",
                      clientAddr.address().to_string(), clientAddr.port());
+		linkStatus = eLinkStatus::LINK_STATUS_BIND;
     }
 
     void ClientSocket::setTcpInitialMessage()
@@ -116,6 +154,11 @@ namespace endpoints
 
     void ClientSocket::startSocketLink()
     {
+		if (linkStatus < eLinkStatus::LINK_STATUS_BIND)
+		{
+			return;
+		}
+
         if(connectServer())
         {
             startDataReceiverThread();
