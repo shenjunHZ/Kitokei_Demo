@@ -84,8 +84,8 @@ namespace usbAudio
         }
 
         size_t size = (alsaAudioContext.periodFrames * alsaAudioContext.bitsPerFrame / BitsByte);
-        alsaAudioContext.audioBuffer = new char[size];
-        if (not alsaAudioContext.audioBuffer)
+        alsaAudioContext.audioBuffer.resize(size);
+        if (alsaAudioContext.audioBuffer.empty())
         {
             cleanUpALSAAudioResource(alsaAudioContext);
             LOG_ERROR_MSG("Create audio buffer failed.");
@@ -179,15 +179,16 @@ namespace usbAudio
                 usleep(100 * 1000);
             }
 
-            //memset(recorder.audioBuffer, 0, bytes);
-            if (pcmRead(alsaAudioContext, frames) != frames)
+			const size_t readFrames = pcmRead(alsaAudioContext, frames);
+            if (readFrames != frames)
             {
+				LOG_WARNING_MSG("PCM read audio frames {} not match {}.", readFrames, frames);
                 return;
             }
 
             if (alsaAudioContext.onDataInd)
             {
-                std::string recordData(alsaAudioContext.audioBuffer, bytes);
+                std::string recordData(alsaAudioContext.audioBuffer.begin(), alsaAudioContext.audioBuffer.end());
                 alsaAudioContext.onDataInd(recordData);
             }
         }
@@ -197,7 +198,7 @@ namespace usbAudio
     int LinuxAlsa::pcmRead(configuration::ALSAAudioContext& alsaAudioContext, const size_t& frameSize)
     {
         snd_pcm_t* handle = static_cast<snd_pcm_t*>(alsaAudioContext.pcmHandle);
-        char* audioData = alsaAudioContext.audioBuffer;
+        char* audioData = reinterpret_cast<char*>(&alsaAudioContext.audioBuffer[0]);
         snd_pcm_uframes_t count = frameSize;
 
         while (count > 0)
@@ -283,7 +284,6 @@ namespace usbAudio
                 usleep(100 * 1000);
             }
 
-            //memset(recorder.audioBuffer, 0, bytes);
             if (pcmWrite(alsaAudioContext, frames) != frames)
             {
                 return static_cast<int>(ALSAErrorCode::ALSA_ERR_WRITEDATA);
@@ -295,7 +295,7 @@ namespace usbAudio
     int LinuxAlsa::pcmWrite(configuration::ALSAAudioContext& alsaAudioContext, const size_t& frameSize)
     {
         snd_pcm_t* handle = static_cast<snd_pcm_t*>(alsaAudioContext.pcmHandle);
-        char* audioData = alsaAudioContext.audioBuffer;
+        char* audioData = reinterpret_cast<char*>(alsaAudioContext.audioBuffer[0]);
         snd_pcm_uframes_t count = frameSize;
 
         while (count > 0)
@@ -389,10 +389,9 @@ namespace usbAudio
     // free audio buffer
     void LinuxAlsa::freeAudioBuffer(configuration::ALSAAudioContext& alsaAudioContext)
     {
-        if (alsaAudioContext.audioBuffer)
+        if (not alsaAudioContext.audioBuffer.empty())
         {
-            delete[](alsaAudioContext.audioBuffer);
-            alsaAudioContext.audioBuffer = nullptr;
+			alsaAudioContext.audioBuffer.clear();
         }
     }
 
@@ -430,9 +429,7 @@ namespace usbAudio
 
     bool LinuxAlsa::isStoppedInternal(configuration::ALSAAudioContext& alsaAudioContext)
     {
-        snd_pcm_state_t state;
-
-        state = snd_pcm_state(static_cast<snd_pcm_t*>(alsaAudioContext.pcmHandle));
+        snd_pcm_state_t state = snd_pcm_state(static_cast<snd_pcm_t*>(alsaAudioContext.pcmHandle));
         switch (state) 
         {
         case SND_PCM_STATE_RUNNING:
@@ -483,7 +480,7 @@ namespace usbAudio
             io = snd_device_name_get_hint(*n, "IOID");
             name = snd_device_name_get_hint(*n, "NAME");
             descr = snd_device_name_get_hint(*n, "DESC");
-            if (name && (io == nullptr || strcmp(io, filter.c_str()) == 0))
+            if (name && descr && (io != nullptr && strcmp(io, filter.c_str()) == 0))
             {
                 LOG_DEBUG_MSG("PCM Device Name: {}, describe: {}",name, descr);
                 cnt++;
@@ -496,6 +493,10 @@ namespace usbAudio
             {
                 free(name);
             }
+			if (nullptr != descr)
+			{
+				free(descr);
+			}
             n++;
         }
 
@@ -623,12 +624,13 @@ namespace usbAudio
         */
         snd_pcm_uframes_t size = 0;
         ret = snd_pcm_hw_params_get_period_size(hwParams, &size, 0);
-        alsaAudioContext.periodFrames = size;
         if (ret < 0)
         {
             LOG_ERROR_MSG("get period size fail {}.", snd_strerror(ret));
             return false;
         }
+		alsaAudioContext.periodFrames = size;
+
         ret = snd_pcm_hw_params_get_buffer_size(hwParams, &size);
         if (ret < 0)
         {

@@ -66,7 +66,13 @@ namespace usbAudio
         if ("G711a" == audioFormat)
         {
             waveFormatTag = configuration::WaveFormatTag::WAVE_FORMAT_G711a;
+			m_waveHeader.format_tag = static_cast<unsigned short>(waveFormatTag);
         }
+		else if ("G711u" == audioFormat)
+		{
+			waveFormatTag = configuration::WaveFormatTag::WAVE_FORMAT_G711u;
+			m_waveHeader.format_tag = static_cast<unsigned short>(waveFormatTag);
+		}
 
         configuration::WAVEFORMATEX wavfmt = {
             static_cast<unsigned short>(waveFormatTag), audioChannel, sampleRate,
@@ -82,7 +88,6 @@ namespace usbAudio
         m_waveHeader.avg_bytes_per_sec = wavfmt.nAvgBytesPerSec;
         m_waveHeader.samples_per_sec = wavfmt.nSamplesPerSec;
         m_waveHeader.channels = wavfmt.nChannels;
-        m_waveHeader.format_tag = wavfmt.wFormatTag;
 
         if (0 == m_sysPlayback->getAudioDevNum(SND_PCM_STREAM_PLAYBACK))
         {
@@ -281,7 +286,7 @@ namespace usbAudio
 
         while (keep_running)
         {
-            int ret = fread(m_speechRec.alsaAudioContext.audioBuffer, 1, size, m_fp);
+            int ret = fread(&m_speechRec.alsaAudioContext.audioBuffer[0], 1, size, m_fp);
             if (1 > ret)
             {
                 LOG_DEBUG_MSG("reading the end.");
@@ -343,9 +348,11 @@ namespace usbAudio
         {
             configuration::RTPSessionDatas rtpSessionDatas;
             m_rtpSession->receivePacket(rtpSessionDatas);
-
+			readRTPAudioData(rtpSessionDatas);
             m_rtpSession->startRTPPolling();
         }
+
+		endPlaybackWithReason(static_cast<int>(configuration::SpeechEndReason::END_REASON_VAD_DETECT));
     }
 
 } // namespace usbAudio
@@ -354,6 +361,24 @@ int usbAudio::AudioPlaybackService::readRTPAudioData(configuration::RTPSessionDa
 {
     size_t frames = m_speechRec.alsaAudioContext.periodFrames;
     size_t size = (frames * m_speechRec.alsaAudioContext.bitsPerFrame / BitsByte);
+	while (rtpSessionDatas.size())
+	{
+		const configuration::RTPSessionData& rtpSessionData = rtpSessionDatas.front();
+		m_speechRec.alsaAudioContext.audioBuffer.resize(rtpSessionDatas.size());
+		std::copy(rtpSessionData.payloadDatas.cbegin(), rtpSessionData.payloadDatas.cend(), m_speechRec.alsaAudioContext.audioBuffer.begin());
+
+		// write to PCM device
+		if (m_sysPlayback)
+		{
+			int errCode = m_sysPlayback->readAudioDataToPCM(m_speechRec.alsaAudioContext);
+			if (0 > errCode)
+			{
+				endPlaybackWithReason(errCode);
+				return errCode;
+			}
+		}
+		rtpSessionDatas.pop();
+	}
 
     return 0;
 }

@@ -51,6 +51,7 @@ namespace endpoints
         void startDataReceiverThread();
         void receiveDataRoutine();
         void receiveDataFromSocket();
+		bool prepareConnect();
         bool connectServer();
         void stopConcreteTimer();
         bool reConnectServer();

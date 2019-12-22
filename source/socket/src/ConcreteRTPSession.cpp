@@ -156,7 +156,7 @@ namespace endpoints
                     rtpSessionData.sequenceNumber = packet->GetSequenceNumber();
                     rtpSessionData.payloadDatas.resize(packet->GetPayloadLength());
                     memcpy(&rtpSessionData.payloadDatas[0], packet->GetPayloadData(), packet->GetPayloadLength());
-                    rtpSessionDatas.push_back(rtpSessionData);
+                    rtpSessionDatas.push(rtpSessionData);
 
                     m_rtpReceiveSession.DeletePacket(packet);
                     ++packetReceived;

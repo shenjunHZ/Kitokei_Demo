@@ -9,7 +9,6 @@ namespace
     const int waitForTimeout = 2;
     const int MAX_WRITE_DATA = 2048;
     const int MAX_SOCKET_DATA = 1046;
-    const unsigned short SAMPLE_BIT_SIZE = 16;
     constexpr unsigned short BitsByte = 8;
 } // namespace
 
@@ -85,13 +84,19 @@ namespace usbAudio
         if ("G711a" == audioFormat)
         {
             waveFormatTag = configuration::WaveFormatTag::WAVE_FORMAT_G711a;
+			m_waveHeader.format_tag = static_cast<unsigned short>(waveFormatTag);
         }
+		else if ("G711u" == audioFormat)
+		{
+			waveFormatTag = configuration::WaveFormatTag::WAVE_FORMAT_G711u;
+			m_waveHeader.format_tag = static_cast<unsigned short>(waveFormatTag);
+		}
 
         configuration::WAVEFORMATEX wavfmt = {
             static_cast<unsigned short>(waveFormatTag), audioChannel, sampleRate,
-            static_cast<unsigned int>(sampleRate * audioChannel * SAMPLE_BIT_SIZE / BitsByte),
-            static_cast<unsigned short>(audioChannel* SAMPLE_BIT_SIZE / BitsByte),
-            SAMPLE_BIT_SIZE,
+            static_cast<unsigned int>(sampleRate * audioChannel * audio::getSampleBit(m_config) / BitsByte),
+            static_cast<unsigned short>(audioChannel* audio::getSampleBit(m_config) / BitsByte),
+			audio::getSampleBit(m_config),
             0 };
             //static_cast<unsigned short>(sizeof(configuration::WAVEFORMATEX)) };
         m_sysRec = std::make_unique<LinuxAlsa>(m_logger, std::make_unique<configuration::WAVEFORMATEX>(wavfmt));
@@ -99,9 +104,15 @@ namespace usbAudio
         m_waveHeader.bits_per_sample   = wavfmt.wBitsPerSample;
         m_waveHeader.block_align       = wavfmt.nBlockAlign;
         m_waveHeader.avg_bytes_per_sec = wavfmt.nAvgBytesPerSec;
+		if ("PCM" != audioFormat)
+		{
+			m_waveHeader.bits_per_sample /= 2;
+			m_waveHeader.block_align /= 2;
+			m_waveHeader.avg_bytes_per_sec /= 2;
+		}
+
         m_waveHeader.samples_per_sec   = wavfmt.nSamplesPerSec;
         m_waveHeader.channels          = wavfmt.nChannels;
-        m_waveHeader.format_tag        = wavfmt.wFormatTag;
 
         if (0 == m_sysRec->getAudioDevNum(SND_PCM_STREAM_CAPTURE))
         {
@@ -222,7 +233,7 @@ namespace usbAudio
             std::string outputFile = common::getCaptureOutputDir(m_config) + audio::getAudioName(m_config) + "_" + m_timeStamp->now() + ".wav";
             if (openOutputAudioFile(outputFile))
             {
-                m_waveHeader.clear();
+                m_waveHeader.chunkClear();
                 fwrite(&m_waveHeader, sizeof(m_waveHeader), 1, m_fp);
             }
         }
@@ -242,7 +253,7 @@ namespace usbAudio
         }
         if (m_fp)
         {
-            m_waveHeader.dwSampleLength = m_waveHeader.data_chunk_size / (SAMPLE_BIT_SIZE / BitsByte);
+            m_waveHeader.dwSampleLength = m_waveHeader.data_chunk_size / (audio::getSampleBit(m_config) / BitsByte);
             /* fixed size of wav file header data */
             m_waveHeader.chunk_size += m_waveHeader.data_chunk_size + (sizeof(m_waveHeader) - 8);
             /* write the corrected data back to the file header.

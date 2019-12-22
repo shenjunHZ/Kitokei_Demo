@@ -206,6 +206,16 @@ namespace audio
         }
         return "PCM";
     }
+
+	int getSampleBit(const configuration::AppConfiguration& config)
+	{
+		if (config.find(configuration::sampleBit) != config.end())
+		{
+			return config[configuration::sampleBit].as<int>();
+		}
+		return 8;
+	}
+
 } // namespace audio
 
 namespace rtp

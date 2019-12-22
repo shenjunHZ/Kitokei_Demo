@@ -29,16 +29,17 @@ namespace endpoints
         tcp::resolver::query query(hostName, "");
 
         boost::asio::io_service ioService;
-        const auto resolvedIterator = tcp::resolver(ioService).resolve(query);
+		boost::asio::ip::tcp::resolver::iterator resolvedIterator = tcp::resolver(ioService).resolve(query);
         while (resolvedIterator != tcp::resolver::iterator())
         {
             tcp::endpoint endpoint = *resolvedIterator;
 			boost::asio::ip::address address;
-			address.from_string(endpoint.address().to_string());
+			address = address.from_string(endpoint.address().to_string());
 			if (address.is_v4())
 			{
-				return endpoint.address().to_string();
+				return address.to_string();
 			}
+			resolvedIterator++;
         }
         BOOST_THROW_EXCEPTION(std::runtime_error("Unable to resolve " + hostName + " with boost tcp resolver"));
     }
@@ -87,8 +88,7 @@ namespace endpoints
         createTcpSocket(m_localAddr);
         setTcpSocketOptions(m_socketfId, m_tcpConfiguration);
         socklen_t socketLen = sizeof(*m_localAddr.data());
-        auto const ret = m_socketSysCall.wrapper_tcp_bind(m_socketfId, m_localAddr.data(), socketLen);
-        //auto const ret = 1;
+		auto const ret = 0; // m_socketSysCall.wrapper_tcp_bind(m_socketfId, m_localAddr.data(), socketLen);
         if(0 > ret)
         {
             LOG_INFO_MSG(m_logger, "tcp socket bind {}:{} error code : {}", 
@@ -152,6 +152,24 @@ namespace endpoints
 
     }
 
+	bool ClientSocket::prepareConnect()
+	{
+		if (connectServer())
+		{
+			return true;
+		}
+		else
+		{
+			bool bConnectStatus = false;
+			do
+			{
+				sleep(5);
+				bConnectStatus = reConnectServer();
+			} while (!bConnectStatus);
+		}
+		return true;
+	}
+
     void ClientSocket::startSocketLink()
     {
 		if (linkStatus < eLinkStatus::LINK_STATUS_BIND)
@@ -159,22 +177,8 @@ namespace endpoints
 			return;
 		}
 
-        if(connectServer())
-        {
-            startDataReceiverThread();
-        }
-        else
-        {
-            bool bConnectStatus = false;
-            do
-            {
-                //LOG_ERROR_MSG("tcp connection failed. scocke id: {} Error code : {}", m_socketfId, std::strerror(errno));
-                sleep(5);
-                bConnectStatus = reConnectServer();
-            }while(!bConnectStatus);
-
-            startDataReceiverThread();
-        }
+		prepareConnect();
+        startDataReceiverThread();
     }
 
     void ClientSocket::stopConcreteTimer()
@@ -237,7 +241,6 @@ namespace endpoints
     void ClientSocket::startDataReceiverThread()
     {
         m_continueReceiving = true;
-        //m_dataReceiverThread = std::thread(&ClientSocket::receiveDataRoutine, this);
         receiveDataRoutine();
     }
 
@@ -345,7 +348,7 @@ namespace endpoints
         {
             //m_socketSysCall.wrapper_close(m_socketfId);
             m_socketClosed = true;
-            LOG_DEBUG_MSG("Socket {} close.", m_socketfId);
+            LOG_DEBUG_MSG("Socket {} close.", m_socketfId); // to do refactor state machine
         }
         else
         {

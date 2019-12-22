@@ -50,6 +50,8 @@ namespace audio
     std::string getPlaybackAudioFile(const configuration::AppConfiguration& config);
 
     std::string getAudioFormat(const configuration::AppConfiguration& config);
+
+	int getSampleBit(const configuration::AppConfiguration& config);
 } // namespace audio
 
 namespace rtp
