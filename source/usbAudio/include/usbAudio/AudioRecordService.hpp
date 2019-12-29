@@ -1,4 +1,6 @@
 #pragma once
+#include <mutex>
+#include <condition_variable>
 #include "Configurations/Configurations.hpp"
 #include "Configurations/ParseConfigFile.hpp"
 #include "logger/Logger.hpp"
@@ -64,5 +66,9 @@ namespace usbAudio
         FILE* m_fp;
         configuration::wavePCMHeader m_waveHeader;
         std::shared_ptr<endpoints::IRTPSession> m_rtpSession;
+        std::mutex dataMutex;
+        std::vector<std::uint8_t> m_recordDatas;
+        std::condition_variable cv;
+        std::thread m_rtpSendThread;
     };
 } // namespace usbAudio

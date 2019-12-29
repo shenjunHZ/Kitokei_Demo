@@ -126,6 +126,16 @@ namespace endpoints
         return errCode;
     }
 
+    int ConcreteRTPSession::sendPacket(const std::uint8_t* data, const int& len, const unsigned long& timestampinc)
+    {
+        int errCode = m_rtpSendSession.SendPacket(data, len, AudioPayloadType, false, timestampinc);
+        if (errCode < 0)
+        {
+            LOG_ERROR_MSG("Send RTP packet size {} fail {}", len, RTPGetErrorString(errCode));
+        }
+        return errCode;
+    }
+
     int ConcreteRTPSession::SendPacket(const std::string& data, const int& len, 
         const unsigned char& pt, const bool& mark, const unsigned long& timestampinc)
     {

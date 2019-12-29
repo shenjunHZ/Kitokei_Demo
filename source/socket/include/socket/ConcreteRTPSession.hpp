@@ -16,6 +16,7 @@ namespace endpoints
         int sendPacket(const std::string& data, const int& len, const unsigned long& timestampinc) override;
         int SendPacket(const std::string& data, const int& len,
             const unsigned char& pt, const bool& mark, const unsigned long& timestampinc) override;
+        int sendPacket(const std::uint8_t* data, const int& len, const unsigned long& timestampinc) override;
         int receivePacket(configuration::RTPSessionDatas& rtpSessionData) override;
 
     private:

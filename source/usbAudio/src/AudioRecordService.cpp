@@ -10,6 +10,7 @@ namespace
     const int MAX_WRITE_DATA = 2048;
     const int MAX_SOCKET_DATA = 1046;
     constexpr unsigned short BitsByte = 8;
+    std::atomic_bool keep_running{ true };
 } // namespace
 
 namespace usbAudio
@@ -28,6 +29,7 @@ namespace usbAudio
         , m_timeStamp{ std::make_unique<TimeStamp>() }
         , m_fp{nullptr}
         , m_rtpSession{ std::move(rtpSession) }
+        , m_rtpSendThread{ std::thread([this]() {this->sendAudioData(""); }) }
     {
         if (m_rtpSession)
         {
@@ -298,7 +300,11 @@ namespace usbAudio
             return;
         }
 
-        sendAudioData(data);
+        dataMutex.lock();
+        std::copy(data.begin(), data.end(), std::back_inserter(m_recordDatas));
+        dataMutex.unlock();
+        cv.notify_one();
+        //sendAudioData(data);
     }
 
     int AudioRecordService::writeAudioData(const std::string& data)
@@ -454,32 +460,26 @@ namespace usbAudio
         return false;
     }
 
-    int AudioRecordService::sendAudioData(const std::string& data)
+    int AudioRecordService::sendAudioData(const std::string&)
     {
-        if (data.empty())
-        {
-            LOG_ERROR_MSG("audio data is empty.");
-            return 0;
-        }
-        int dataSize = data.size();
-        int index = 0;
-        size_t writeData = 0;
-        unsigned long timestampinc = 1000;
-        while (dataSize > 0)
-        {
-            if (dataSize > MAX_SOCKET_DATA)
-            {
-                m_rtpSession->sendPacket(&data[0 + index * MAX_SOCKET_DATA], MAX_SOCKET_DATA, timestampinc);
-            }
-            else
-            {
-                m_rtpSession->sendPacket(&data[0 + index * MAX_SOCKET_DATA], dataSize, timestampinc);
-            }
-            timestampinc = 0;
-            dataSize -= MAX_SOCKET_DATA;
-            ++index;
-        }
+        const unsigned long timestampinc = 320;
+        const unsigned int sendDataSize = 320;
 
+        while (keep_running)
+        {
+            std::unique_lock<std::mutex> guard(dataMutex);
+            cv.wait(guard, [&recordDatas = this->m_recordDatas]()
+            {
+                return recordDatas.size() > sendDataSize;  // 8000/25=320
+            });
+
+            m_rtpSession->sendPacket(&m_recordDatas[0], sendDataSize, timestampinc);
+            auto it = m_recordDatas.begin();
+            for (int index = 0; index < sendDataSize; index++)
+            {
+                it = m_recordDatas.erase(it);
+            }
+        }
         return 0;
     }
 
