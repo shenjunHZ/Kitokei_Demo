@@ -183,7 +183,7 @@ namespace usbAudio
             if (readFrames != frames)
             {
 				LOG_WARNING_MSG("PCM read audio frames {} not match {}.", readFrames, frames);
-                return;
+                continue;
             }
 
             if (alsaAudioContext.onDataInd)
