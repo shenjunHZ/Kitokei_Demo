@@ -1,0 +1,11 @@
+[Unit]
+Description=Kitokei Demo service 
+
+[Service] 
+Type=simple 
+ExecStart=/home/khadas/development/remoteBuildRoot/Kitokei_Demo/build/linux-release/source/Kitokei_Demo --config /home/khadas/development/remoteBuildRoot/Kitokei_Demo/linux-release/configuration.ini
+Restart=on-failure
+RestartSec=30s
+
+[Install]
+WantedBy=multi-user.target
