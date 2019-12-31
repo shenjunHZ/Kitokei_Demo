@@ -346,9 +346,13 @@ namespace endpoints
     {
         if(TCP_CLOSE_WAIT == info.tcpi_state)
         {
-            //m_socketSysCall.wrapper_close(m_socketfId);
+            m_socketSysCall.wrapper_close(m_socketfId);
             m_socketClosed = true;
-            LOG_DEBUG_MSG("Socket {} close.", m_socketfId); // to do refactor state machine
+            LOG_DEBUG_MSG("Socket {} close.", m_socketfId);
+
+            createTcpSocket(m_localAddr);
+            setTcpSocketOptions(m_socketfId, m_tcpConfiguration);
+            startSocketLink();
         }
         else
         {

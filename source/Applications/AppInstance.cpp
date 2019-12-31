@@ -13,7 +13,6 @@ namespace
 {
     std::atomic_bool keep_running{ true };
     constexpr int PipeFileRight = 0666;
-    constexpr int AudioSecondsDuration = 5;
 } // namespace 
 namespace application
 {
