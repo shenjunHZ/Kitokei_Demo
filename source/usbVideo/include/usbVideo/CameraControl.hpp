@@ -18,8 +18,6 @@ namespace usbVideo
         bool getCameraFrameFormat(struct v4l2_format& format) override;
         bool getBestCameraFrameFormat(configuration::bestFrameSize& frameSize) override;
 
-        bool setCameraPixFormat(uint32_t width, uint32_t height) override { return false; };
-
         int requestMmapBuffers(const struct v4l2_requestbuffers& requestBuffers) override;
         bool startCameraStreaming(const struct v4l2_requestbuffers& requestBuffers) override;
 
@@ -27,7 +25,7 @@ namespace usbVideo
         bool dequeueBuffer(struct v4l2_buffer& v4l2Buffer) override;
         bool queryBuffer(const struct v4l2_buffer& v4l2Buffer) override;
 
-        bool endCameraStreaming(const int& videoType) override;
+        bool stopCameraStreaming(const int& videoType) override;
         bool unMapBuffers() override;
 
         bool getRGBBuffer(std::vector<uint8_t>& rgbBuffer, const struct v4l2_buffer& v4l2Buffer,
@@ -37,7 +35,10 @@ namespace usbVideo
         bool queryMapBuffer(const struct v4l2_buffer& buffer);
         bool getPixelFormat(struct v4l2_fmtdesc& fmtdesc, configuration::bestFrameSize& frameSize);
         bool getFrameIntervals(const struct v4l2_frmsizeenum& frmSizeEnum);
+        bool tryCameraFrameFormat(struct v4l2_format& format) override;
 
+        bool setCameraPixFormat(uint32_t width, uint32_t height) override { return false; };
+        bool setCameraFrameFormat(struct v4l2_format& format) override;
     private:
         Logger& m_logger;
         int m_cameraFd{-1};

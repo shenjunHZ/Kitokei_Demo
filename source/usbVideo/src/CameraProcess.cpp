@@ -65,23 +65,23 @@ namespace usbVideo
                 return false;
             }
 
-            m_cameraControl->getBestCameraFrameFormat(frameSize);
+            return m_cameraControl->getBestCameraFrameFormat(frameSize);
         }
-        return true;
+        return false;
     }
 
     void CameraProcess::outputDeviceInfo()
     {
-        LOG_DEBUG_MSG("***********Device Infomation**********");
-        LOG_DEBUG_MSG("Capability Driver: {}", m_v4l2Capability.driver);
-        LOG_DEBUG_MSG("Capability Card: {}", m_v4l2Capability.card);
-        LOG_DEBUG_MSG("Capability BusInfo: {}", m_v4l2Capability.bus_info);
+        LOG_INFO_MSG(m_logger, "***********Video Device Infomation**********");
+        LOG_INFO_MSG(m_logger, "Capability Driver: {}", m_v4l2Capability.driver);
+        LOG_INFO_MSG(m_logger, "Capability Card: {}", m_v4l2Capability.card);
+        LOG_INFO_MSG(m_logger, "Capability BusInfo: {}", m_v4l2Capability.bus_info);
 
-        LOG_DEBUG_MSG("Format Width: {}", m_v4l2Format.fmt.pix.width);
-        LOG_DEBUG_MSG("Format Height: {}", m_v4l2Format.fmt.pix.height);
-        LOG_DEBUG_MSG("Pixel format: {}", checkPixelFormat() );
-        LOG_DEBUG_MSG("Bytes per line: {}", m_v4l2Format.fmt.pix.bytesperline);
-        LOG_DEBUG_MSG("***********Device Infomation**********");
+        LOG_INFO_MSG(m_logger, "Format Width: {}", m_v4l2Format.fmt.pix.width);
+        LOG_INFO_MSG(m_logger, "Format Height: {}", m_v4l2Format.fmt.pix.height);
+        LOG_INFO_MSG(m_logger, "Pixel format: {}", checkPixelFormat() );
+        LOG_INFO_MSG(m_logger, "Bytes per line: {}", m_v4l2Format.fmt.pix.bytesperline);
+        LOG_INFO_MSG(m_logger, "***********Video Device Infomation**********");
     }
 
     int CameraProcess::checkPixelFormat()
@@ -90,6 +90,8 @@ namespace usbVideo
         {
         case V4L2_PIX_FMT_YUYV:
             return V4L2_PIX_FMT_YUYV;
+        case V4L2_PIX_FMT_MJPEG:
+            return V4L2_PIX_FMT_MJPEG;
         default:
             return -1;
         }
@@ -315,8 +317,8 @@ namespace usbVideo
         {
             m_captureThread.join();
         }
-        int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        m_cameraControl->endCameraStreaming(type);
+        const int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        m_cameraControl->stopCameraStreaming(type);
 
         m_cameraControl->unMapBuffers();
         m_cameraControl->closeDevice();

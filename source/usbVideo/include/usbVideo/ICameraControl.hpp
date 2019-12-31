@@ -24,12 +24,16 @@ namespace usbVideo
         virtual bool getCameraCapability(struct v4l2_capability&) = 0;
         // get the camera video format
         virtual bool getCameraFrameFormat(struct v4l2_format&) = 0;
+        // check format whether support or not
+        virtual bool tryCameraFrameFormat(struct v4l2_format& format) = 0;
 
         // get best frame format
         virtual bool getBestCameraFrameFormat(configuration::bestFrameSize& frameSize) = 0;
 
-        // set video capture format
+        // set video capture pix format
         virtual bool setCameraPixFormat(uint32_t width, uint32_t height) = 0;
+        // set video capture frame format
+        virtual bool setCameraFrameFormat(struct v4l2_format& format) = 0;
 
         // request buffers and maps
         virtual int requestMmapBuffers(const struct v4l2_requestbuffers&) = 0;
@@ -45,8 +49,8 @@ namespace usbVideo
 
         // unmap buffers
         virtual bool unMapBuffers() = 0;
-        // end the streaming
-        virtual bool endCameraStreaming(const int& videoType) = 0;
+        // stop the streaming
+        virtual bool stopCameraStreaming(const int& videoType) = 0;
 
         virtual bool getRGBBuffer(std::vector<uint8_t>& rgbBuffer, const struct v4l2_buffer& v4l2Buffer,
             const int& reqWidth, const int& reqHeight) = 0;

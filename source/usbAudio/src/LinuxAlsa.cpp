@@ -105,8 +105,6 @@ namespace usbAudio
         {
             return static_cast<int>(configuration::ALSAErrorCode::ALSA_ERR_ALREADY);
         }
-//         size_t audioTotalSize = audioSecondsDuration * m_waveFormat->nSamplesPerSec *
-//             m_waveFormat->wBitsPerSample * m_waveFormat->nChannels / 8;
 
         int ret = 0;
         if (SND_PCM_STREAM_CAPTURE == stream)

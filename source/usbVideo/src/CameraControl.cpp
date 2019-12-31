@@ -77,10 +77,40 @@ namespace usbVideo
         return true;
     }
 
+    bool CameraControl::setCameraFrameFormat(struct v4l2_format& format)
+    {
+        format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        format.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
+        if (-1 == ioctl(m_cameraFd, VIDIOC_S_FMT, &format))
+        {
+            LOG_ERROR_MSG("Cannot set YUYV video capture: {}", m_cameraDev);
+            return false;
+        }
+        return true;
+    }
+
+    bool CameraControl::tryCameraFrameFormat(struct v4l2_format& format)
+    {
+        format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        format.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
+        if (-1 == ioctl(m_cameraFd, VIDIOC_TRY_FMT, &format))
+        {
+            LOG_ERROR_MSG("Cannot support YUYV video capture: {}", m_cameraDev);
+            return false;
+        }
+        return true;
+    }
+
     bool CameraControl::getBestCameraFrameFormat(configuration::bestFrameSize& frameSize)
     {
         int ret = -1;
         struct v4l2_fmtdesc fmtdesc;
+        struct v4l2_format format;
+        if ( (not tryCameraFrameFormat(format)) or (not setCameraFrameFormat(format)) )
+        {
+            return false;
+        }
+
         //  All formats are enumerable by beginning at index zero and incrementing by one until EINVAL is returned.
         fmtdesc.index = 0;
         fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -100,19 +130,15 @@ namespace usbVideo
                 continue;
             }
 
-            if( not getPixelFormat(fmtdesc, frameSize) )
-            {
-                LOG_ERROR_MSG("Unable to get frame sizes.");
-                return false;
-            }
+            return getPixelFormat(fmtdesc, frameSize);
         }
-        if (errno != EINVAL) 
+        if (0 != ret && 0 == fmtdesc.index)
         {
-            LOG_ERROR_MSG("ERROR enumerating frame formats: {}", errno);
+            LOG_ERROR_MSG("Enumerating frame formats failure: {}", std::strerror(errno));
             return false;
         }
 
-        return true;
+        return false;
     }
 
     bool CameraControl::getPixelFormat(struct v4l2_fmtdesc& fmtdesc, configuration::bestFrameSize& frameSize)
@@ -178,9 +204,9 @@ namespace usbVideo
             }
             fsize.index++;
         }
-        if (ret != 0 && errno != EINVAL) 
+        if (ret != 0 && 0 == fsize.index)
         {
-            LOG_ERROR_MSG("ERROR enumerating frame sizes: {}", errno);
+            LOG_ERROR_MSG("Enumerating frame sizes failure: {}", std::strerror(errno));
             return false;
         }
 
@@ -202,7 +228,7 @@ namespace usbVideo
         {
             if (fival.type == V4L2_FRMIVAL_TYPE_DISCRETE) 
             {
-                LOG_DEBUG_MSG("Time interval between frame: {}/{} .",
+                LOG_DEBUG_MSG("Time interval frame: {}/{} .",
                     fival.discrete.numerator, fival.discrete.denominator);
             }
             else if (fival.type == V4L2_FRMIVAL_TYPE_CONTINUOUS) 
@@ -223,9 +249,9 @@ namespace usbVideo
             }
             fival.index++;
         }
-        if (ret != 0 && errno != EINVAL) 
+        if (ret != 0 && 0 == fival.index)
         {
-            LOG_ERROR_MSG("ERROR enumerating frame intervals: {}", errno);
+            LOG_ERROR_MSG("Enumerating frame intervals failure: {}", std::strerror(errno));
             return false;
         }
 
@@ -330,11 +356,11 @@ namespace usbVideo
         return true;
     }
 
-    bool CameraControl::endCameraStreaming(const int& videoType)
+    bool CameraControl::stopCameraStreaming(const int& videoType)
     {
         if (ioctl(m_cameraFd, VIDIOC_STREAMOFF, &videoType) < 0)
         {
-            LOG_ERROR_MSG("en camera streaming (VIDIOC_STREAMOFF) failed: {}", std::strerror(errno));
+            LOG_ERROR_MSG("Stop camera streaming (VIDIOC_STREAMOFF) failed: {}", std::strerror(errno));
             return false;
         }
         return true;
