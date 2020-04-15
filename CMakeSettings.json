@@ -1,45 +1,45 @@
 ﻿{
     "configurations": [
-        {
-            "name": "linux-release",
-            "generator": "Unix Makefiles",
-            //"configurationType": "RelWithDebInfo",
-            "configurationType": "Debug",
-            "variables": [
-                {
-                    "name": "CMAKE_CXX_COMPILER",
-                    "value": "/usr/bin/g++",
-                    "type": "FILEPATH"
-                },
-                {
-                    "name": "CMAKE_C_COMPILER",
-                    "value": "/usr/bin/gcc",
-                    "type": "FILEPATH"
-                }
-            ],
-            "remoteMachineName": "ipqwcwt.zicp.vip",
-            "remoteCMakeListsRoot": "/home/khadas/development/remoteBuildRoot/Kitokei_Demo/${name}",
-            "cmakeExecutable": "/usr/local/bin/cmake",
-            "remoteBuildRoot": "/home/khadas/development/remoteBuildRoot/Kitokei_Demo/build/${name}",
-            "remoteInstallRoot": "/home/khadas/development/remoteBuildRoot/Kitokei_Demo/install/${name}",
-            "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\Kitokei_Demo\\build\\${name}",
-            "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\Kitokei_Demo\\install\\${name}",
-            "remoteCopySources": true,
-            "remoteCopySourcesOutputVerbosity": "Normal",
-            "remoteCopySourcesConcurrentCopies": "10",
-            "remoteCopySourcesMethod": "sftp",
-            "remoteCopySourcesExclusionList": [
-                ".vs",
-                ".git"
-            ],
-            "rsyncCommandArgs": "-t --delete --delete-excluded",
-            "remoteCopyBuildOutput": false,
-            "cmakeCommandArgs": "-j10",
-            "buildCommandArgs": "",
-            "ctestCommandArgs": "",
-            "inheritEnvironments": [
-                "linux_x64"
-            ]
-        }
+      {
+        "name": "linux-release",
+        "generator": "Unix Makefiles",
+        //"configurationType": "RelWithDebInfo",
+        "configurationType": "Debug",
+        "variables": [
+          {
+            "name": "CMAKE_CXX_COMPILER",
+            "value": "/usr/bin/g++",
+            "type": "FILEPATH"
+          },
+          {
+            "name": "CMAKE_C_COMPILER",
+            "value": "/usr/bin/gcc",
+            "type": "FILEPATH"
+          }
+        ],
+        "remoteMachineName": "ipqwcwt.zicp.vip",
+        "remoteCMakeListsRoot": "/home/khadas/development/remoteBuildRoot/Kitokei_Demo/${name}",
+        "cmakeExecutable": "/usr/local/bin/cmake",
+        "remoteBuildRoot": "/home/khadas/development/remoteBuildRoot/Kitokei_Demo/build/${name}",
+        "remoteInstallRoot": "/home/khadas/development/remoteBuildRoot/Kitokei_Demo/install/${name}",
+        "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\remoteBuildRoot\\Kitokei_Demo\\build\\${name}",
+        "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\remoteBuildRoot\\Kitokei_Demo\\install\\${name}",
+        "remoteCopySources": true,
+        "remoteCopySourcesOutputVerbosity": "Normal",
+        "remoteCopySourcesConcurrentCopies": "10",
+        "remoteCopySourcesMethod": "sftp",
+        "remoteCopySourcesExclusionList": [
+          ".vs",
+          ".git"
+        ],
+        "rsyncCommandArgs": "-t --delete --delete-excluded",
+        "remoteCopyBuildOutput": false,
+        "cmakeCommandArgs": "-j10",
+        "buildCommandArgs": "",
+        "ctestCommandArgs": "",
+        "inheritEnvironments": [
+          "linux_x64"
+        ]
+      }
     ]
 }

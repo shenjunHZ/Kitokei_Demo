@@ -2,7 +2,7 @@
 #include "logger/Logger.hpp"
 #include "timer/IOService.hpp"
 #include "timer/DefaultTimerService.hpp"
-#include "usbVideo/CameraProcess.hpp"
+#include "usbVideo/CameraService.hpp"
 #include "usbVideo/VideoManagement.hpp"
 #include "usbAudio/AudioRecordService.hpp"
 #include "usbAudio/AudioPlaybackService.hpp"
@@ -22,7 +22,7 @@ namespace application
         , m_ioService{ std::make_unique<timerservice::IOService>() }
         , m_timerService{ std::make_unique<timerservice::DefaultTimerService>(*m_ioService) }
         , m_clientReceiver{ logger, config, appAddress, *m_timerService }
-        , m_cameraProcess{ std::make_unique<usbVideo::CameraProcess>(logger, m_config) }
+        , m_cameraProcess{ std::make_unique<usbVideo::CameraService>(logger, m_config) }
         , m_videoManagement{ std::make_unique<usbVideo::VideoManagement>(logger, m_config, *m_timerService) }
         , m_rtpSession{ std::make_shared<endpoints::ConcreteRTPSession>(logger, m_config) }
         , m_audioRecordService{std::make_unique<usbAudio::AudioRecordService>(logger, m_config, m_rtpSession)}
@@ -33,7 +33,7 @@ namespace application
 
     AppInstance::~AppInstance()
     {
-        usbVideo::CameraProcess::stopRun();
+        usbVideo::CameraService::stopRun();
         if (m_audioRecordService)
         {
             m_audioRecordService->exitAudioRecord();
@@ -49,24 +49,47 @@ namespace application
         }
     }
 
-    void AppInstance::initService(spdlog::logger& logger)
+    bool AppInstance::createPipeFile()
     {
         std::string outputDir = common::getCaptureOutputDir(m_config);
         std::string pipeFileName = video::getPipeFileName(m_config);
         std::string pipeFile = outputDir + pipeFileName;
+        std::string audioPipeFile = outputDir + "audioPipe";
 
         if (not common::isFileExistent(pipeFile))
         {
             if (-1 == mkfifo(pipeFile.c_str(), PipeFileRight))
             {
                 LOG_ERROR_MSG("Error creating the pipe: {}", pipeFile);
-                return;
+                return false;
             }
         }
         else
         {
             LOG_DEBUG_MSG("Pipe file have exist {}.", pipeFile);
         }
+        if (not common::isFileExistent(audioPipeFile))
+        {
+            if (-1 == mkfifo(audioPipeFile.c_str(), PipeFileRight))
+            {
+                LOG_ERROR_MSG("Error creating the pipe: {}", audioPipeFile);
+                return false;
+            }
+        }
+        else
+        {
+            LOG_DEBUG_MSG("Pipe file have exist {}.", audioPipeFile);
+        }
+        return true;
+    }
+
+    void AppInstance::initService(spdlog::logger& logger)
+    {
+        if (not createPipeFile())
+        {
+            return;
+        }
+
         configuration::bestFrameSize frameSize;
         if (m_cameraProcess)
         {

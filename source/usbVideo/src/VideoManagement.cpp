@@ -81,7 +81,9 @@ namespace usbVideo
 
         if (streamThread.joinable())
         {
+            LOG_DEBUG_MSG("Wait for stream thread exit.");
             streamThread.join();
+            LOG_DEBUG_MSG("Exit stream thread.");
         }
 
         std::string outputFile = common::getCaptureOutputDir(m_config) + video::getVideoName(m_config) + "_" + m_timeStamp->now() + ".mp4";

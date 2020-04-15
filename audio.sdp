@@ -1,5 +1,5 @@
 m=audio 9000 RTP/AVP 97
-a=rtpmap:97 pcma/8000/2
+a=rtpmap:97 pcma/8000/1
 a=framerate:25
 
-c=IN IP4 192.168.2.102
+c=IN IP4 192.168.2.103

@@ -106,10 +106,11 @@ namespace usbVideo
         int ret = -1;
         struct v4l2_fmtdesc fmtdesc;
         struct v4l2_format format;
-        if ( (not tryCameraFrameFormat(format)) or (not setCameraFrameFormat(format)) )
-        {
-            return false;
-        }
+        // will modify pix parameters
+//         if ( (not tryCameraFrameFormat(format)) )
+//         {
+//             return false;
+//         }
 
         //  All formats are enumerable by beginning at index zero and incrementing by one until EINVAL is returned.
         fmtdesc.index = 0;
@@ -130,12 +131,22 @@ namespace usbVideo
                 continue;
             }
 
-            return getPixelFormat(fmtdesc, frameSize);
+            if (not getPixelFormat(fmtdesc, frameSize))
+            {
+                LOG_ERROR_MSG("Unable to get pixel frame sizes.");
+                return false;
+            }
         }
         if (0 != ret && 0 == fmtdesc.index)
         {
             LOG_ERROR_MSG("Enumerating frame formats failure: {}", std::strerror(errno));
             return false;
+        }
+        format.fmt.pix.width = frameSize.frameWidth;
+        format.fmt.pix.height = frameSize.frameHeight;
+        if (setCameraFrameFormat(format))
+        {
+            return true;
         }
 
         return false;
@@ -255,6 +266,28 @@ namespace usbVideo
             return false;
         }
 
+        return true;
+    }
+
+    bool CameraControl::getCaptureParm(struct v4l2_streamparm& streamParm)
+    {
+        streamParm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        if (0 != ioctl(m_cameraFd, VIDIOC_G_PARM, &streamParm))
+        {
+            LOG_ERROR_MSG("Get VIDIOC_G_PARM failed: {}", m_cameraDev);
+            return false;
+        }
+        return true;
+    }
+
+    bool CameraControl::setCaptureParm(struct v4l2_streamparm& streamParm)
+    {
+        streamParm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        if (0 != ioctl(m_cameraFd, VIDIOC_S_PARM, &streamParm))
+        {
+            LOG_ERROR_MSG("Set VIDIOC_S_PARM failed: {}", m_cameraDev);
+            return false;
+        }
         return true;
     }
 

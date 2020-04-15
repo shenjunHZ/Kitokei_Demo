@@ -17,7 +17,7 @@ namespace timerservice
 
 namespace usbVideo
 {
-    class CameraProcess;
+    class CameraService;
     class IVideoManagement;
 } // namespace usbVideo
 
@@ -46,6 +46,7 @@ namespace application
     private:
         void initService(spdlog::logger& logger);
         void clientDataReceived();
+        bool createPipeFile();
 
     private:
         const configuration::AppConfiguration& m_config;
@@ -55,7 +56,7 @@ namespace application
         ClientReceiver m_clientReceiver;
         std::thread m_dataReceivedThread;
 
-        std::unique_ptr<usbVideo::CameraProcess> m_cameraProcess;
+        std::unique_ptr<usbVideo::CameraService> m_cameraProcess;
         std::unique_ptr<usbVideo::IVideoManagement> m_videoManagement;
         std::thread m_cameraProcessThread;
         std::thread m_videoManagementThread;

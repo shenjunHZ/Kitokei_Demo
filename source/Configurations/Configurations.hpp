@@ -17,6 +17,7 @@ namespace configuration
 {
     constexpr auto logFilePath = LOG_CONFIG_PREFIX ".logFilePath";
     constexpr auto cameraDevice       = VIDEO_CONFIG_PREFIX ".cameraDevice";
+    constexpr auto audioRecord        = VIDEO_CONFIG_PREFIX ".audioRecord";
     constexpr auto enableCameraStream = VIDEO_CONFIG_PREFIX ".enableCameraStream";
     constexpr auto pipeFileName       = VIDEO_CONFIG_PREFIX ".pipeFileName";
     constexpr auto captureOutputDir   = VIDEO_CONFIG_PREFIX ".captureOutputDir";
@@ -152,6 +153,7 @@ namespace configuration
     /* error code */
     enum class ALSAErrorCode
     {
+        ALSA_SUCCESS = 0,
         ALSA_ERR_BASE = -1,
         ALSA_ERR_GENERAL = -2,
         ALSA_ERR_MEMFAIL = -3,

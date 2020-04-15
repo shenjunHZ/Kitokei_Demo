@@ -12,6 +12,7 @@ namespace
         description.add_options()
             (configuration::logFilePath, value<std::string>()->default_value("./log/logFile.log"), "use for recored logs")
             (configuration::cameraDevice,       value<std::string>()->required(),                           "camera device file handle")
+            (configuration::audioRecord,        value<std::string>()->default_value("plughw:1,0"),          "camera audio record")
             (configuration::enableCameraStream, value<bool>()->default_value(true),                         "enable camera stream capture.")
             (configuration::pipeFileName,       value<std::string>()->default_value("videoPipe"),           "camera capture pipe file name.")
             (configuration::captureOutputDir,   value<std::string>()->default_value("/tmp/cameraCapture/"), "camera capture file path.")

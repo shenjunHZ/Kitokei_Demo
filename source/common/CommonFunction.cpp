@@ -60,6 +60,15 @@ namespace video
         return "/dev/video0";
     }
 
+    std::string getDefaultAudioRecord(const configuration::AppConfiguration& config)
+    {
+        if (config.find(configuration::audioRecord) != config.end())
+        {
+            return config[configuration::audioRecord].as<std::string>();
+        }
+        return "plughw:1,0";
+    }
+
     bool getEnableCameraStream(const configuration::AppConfiguration& config)
     {
         if (config.find(configuration::enableCameraStream) != config.end())

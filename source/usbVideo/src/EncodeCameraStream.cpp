@@ -52,39 +52,38 @@ namespace
 }// namespace 
 namespace usbVideo
 {
-    EncodeCameraStream::EncodeCameraStream(Logger& logger, const configuration::AppConfiguration& config)
+    EncodeCameraStream::EncodeCameraStream(Logger& logger, const configuration::AppConfiguration& config, const CloseVideoNotify& notify)
         : m_logger{logger}
         , m_config{config}
+        , closeVideoNotify{std::move(notify)}
     {
 
     }
 
     EncodeCameraStream::~EncodeCameraStream()
     {
-        if (m_fd)
-        {
-            fclose(m_fd);
-            m_fd = nullptr;
-        }
+        closeFile();
     }
 
-    bool EncodeCameraStream::initRegister(const std::string& inputFile, const configuration::bestFrameSize& frameSize)
+    bool EncodeCameraStream::initRegister(const std::string& inputVideoFile, const configuration::bestFrameSize& frameSize, 
+        const std::string& inputAudioFile)
     {
         // it needs to be in a thread, parallel to the writer thread, otherwise it will block
-        m_fd = fopen(inputFile.c_str(), "rb");
+        m_fd = fopen(inputVideoFile.c_str(), "rb");
         if (nullptr == m_fd)
         {
-            LOG_ERROR_MSG("open input file failed {}", inputFile);
+            LOG_ERROR_MSG("open input file failed {}", inputVideoFile);
             return false;
+        }
+        //m_audioFd = fopen(inputAudioFile.c_str(), "rb");
+        fdAudio = open(inputAudioFile.c_str(), O_RDONLY | O_NONBLOCK);
+        //if (nullptr == m_audioFd)
+        if(-1 == fdAudio)
+        {
+            LOG_ERROR_MSG("Open audio input file {} failed.", inputAudioFile);
         }
         videoWidth = frameSize.frameWidth;
         videoHeight = frameSize.frameHeight;
-        // register all, have not been used
-        //av_register_all();
-        // register all encode, could be removed as av_register_all
-        //avcodec_register_all();
-        // Initialize the filter system. Register all builtin filters
-        //avfilter_register_all();
 
         initWatemake();
         return true;
@@ -233,11 +232,6 @@ namespace usbVideo
             LOG_ERROR_MSG("init filter failed as create filter failure.");
             return false;
         }
-        //std::string filtersDescr = "scale=640:480";
-        //std::string filtersDescr = "movie=my_logo.png[wm];[in][wm]overlay=5:5[out]";
-        //std::string filtersDescr = "drawtext=fontfile=arial.ttf:fontcolor=white:fontsize=36:text='ABCD':x=20:y=20";
-        //std::string filtersDescr = "drawbox=x=100:y=100:w=100:h=100:color=pink@0.5";
-        //std::string filtersDescr = "crop=1/2*in_w:1/2*in_h:0:0";
         std::string filtersDescr = "drawtext=fontfile=" + video::getFilterDescr(m_config) + ":fontcolor=white:fontsize=36:text='Chess Kitokei':x=18:y=200";
 
         enum AVPixelFormat pix_fmts[] = { AV_PIX_FMT_YUV420P, AV_PIX_FMT_NONE };
@@ -304,10 +298,7 @@ namespace usbVideo
         if ( (ret = avfilter_graph_parse_ptr(m_filterGraph, filtersDescr.c_str(),
             &inputs, &outputs, NULL)) < 0 )
         {
-            LOG_ERROR_MSG("avfilter_graph_parse_ptr failed {}.", ret);
-            //avfilter_inout_free(&inputs);
-            //avfilter_inout_free(&outputs);
-            //return false;
+            LOG_ERROR_MSG("avfilter_graph_parse_ptr failed {}, no filter description.", ret);
         }
 
         if ( (ret = avfilter_graph_config(m_filterGraph, NULL)) < 0 )
@@ -369,41 +360,67 @@ namespace usbVideo
 
     bool EncodeCameraStream::createEncoder()
     {
-        // Find a registered encoder with a matching codec ID.
-        m_codec = avcodec_find_encoder(AV_CODEC_ID_H264);
-        if (nullptr == m_codec)
+        if (not createVideoEncoder())
         {
-            LOG_ERROR_MSG("find encoder H264 failed.");
+            return false;
+        }
+        //createAudioEncoder();
+
+        return true;
+    }
+
+    bool EncodeCameraStream::createVideoEncoder()
+    {
+        // Find a registered encoder with a matching codec ID.
+        AVCodec* avCodec = avcodec_find_encoder(AV_CODEC_ID_H264);
+        if (nullptr == avCodec)
+        {
+            LOG_ERROR_MSG("Find encoder H264 failed.");
             return false;
         }
         // Allocate an AVCodecContext and set its fields to default values.
-        m_codecContext = avcodec_alloc_context3(m_codec);
+        m_codecContext = avcodec_alloc_context3(avCodec);
         if (nullptr == m_codecContext)
         {
             LOG_ERROR_MSG("alloc codec context failed.");
             return false;
         }
-         m_codecContext->width = videoWidth;
-         m_codecContext->height = videoHeight;
-         m_codecContext->time_base = {1, getVideoFPS(m_config)};
-         m_codecContext->framerate = {getVideoFPS(m_config), 1};
-         m_codecContext->bit_rate = video::getVideoBitRate(m_config);
-         m_codecContext->gop_size = getVideoFPS(m_config) * 2;
-         m_codecContext->max_b_frames = maxBframe;
-         m_codecContext->pix_fmt = AV_PIX_FMT_YUV420P;
-         m_codecContext->codec_type = AVMEDIA_TYPE_VIDEO;
-         m_codecContext->codec_id = AV_CODEC_ID_H264;
-         m_codecContext->qmin = minQuantizer;
-         m_codecContext->qmax = maxQuantizer;
-         m_codecContext->thread_count = threadCounts;
-         m_codecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-         av_dict_set(&m_dictionary, "preset", "slow", 0);
-         av_dict_set(&m_dictionary, "tune", "zerolatency", 0);
-         LOG_DEBUG_MSG("Video bit rate {} bps.", m_codecContext->bit_rate);
+        m_codecContext->width = videoWidth;
+        m_codecContext->height = videoHeight;
+        m_codecContext->time_base = { 1, getVideoFPS(m_config) };
+        m_codecContext->framerate = { getVideoFPS(m_config), 1 };
+        m_codecContext->bit_rate = video::getVideoBitRate(m_config);
+        m_codecContext->gop_size = getVideoFPS(m_config) * 2;
+        m_codecContext->max_b_frames = maxBframe;
+        m_codecContext->pix_fmt = AV_PIX_FMT_YUV420P;
+        m_codecContext->codec_type = AVMEDIA_TYPE_VIDEO;
+        m_codecContext->codec_id = AV_CODEC_ID_H264;
+        m_codecContext->qmin = minQuantizer;
+        m_codecContext->qmax = maxQuantizer;
+        m_codecContext->thread_count = threadCounts;
+        m_codecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+        /*
+        ¨Cpreset it mainly adjusts the balance between coding speed and puality£¬
+        ultrafast¡¢superfast¡¢veryfast¡¢faster¡¢fast¡¢medium¡¢slow¡¢slower¡¢veryslow¡¢placebo the 10 options from fast to slow.
+
+        ¨Ctune it mainly cooperate with video type and visual optimization parameters or special cases,
+        like follow list.
+        film: movie, real person type
+        animation:
+        grain: designed for coding at high bit rates
+        stillimage: used when coding static images
+        psnr: parameters were optimized to improve psnr
+        ssim£ºparameters were optimized to improve ssim
+        fastdecode£º parameters that can be decoded quickly
+        zerolatency: used in situations where very low latency is required, such as coding for teleconference
+        */
+        av_dict_set(&m_dictionary, "preset", "slow", 0);
+        av_dict_set(&m_dictionary, "tune", "zerolatency", 0);
+        LOG_DEBUG_MSG("Video bit rate {} bps.", m_codecContext->bit_rate);
 
         // Initialize the AVCodecContext to use the given AVCodec.
         // need libx264
-        int ret = avcodec_open2(m_codecContext, m_codec, NULL);
+        int ret = avcodec_open2(m_codecContext, avCodec, NULL);
         if (ret < 0)
         {
             LOG_ERROR_MSG("encoder open failed {}.", ret);
@@ -412,17 +429,73 @@ namespace usbVideo
         return true;
     }
 
-    bool EncodeCameraStream::prepareOutputContext(const std::string& outputFile)
+    bool EncodeCameraStream::createAudioEncoder()
+    {
+        //AVCodec* aCodec = avcodec_find_encoder(AV_CODEC_ID_AAC);
+        AVCodec* aCodec = avcodec_find_encoder_by_name("libfdk_aac");
+        if (nullptr == aCodec)
+        {
+            LOG_ERROR_MSG("Find encoder AAC failed.");
+            return false;
+        }
+
+        m_codecAudioContext = avcodec_alloc_context3(aCodec);
+        if (nullptr == m_codecAudioContext)
+        {
+            LOG_ERROR_MSG("Alloc audio codec context failed.");
+            return false;
+        }
+        m_codecAudioContext->sample_rate = 8000;
+        m_codecAudioContext->channel_layout = AV_CH_LAYOUT_MONO;
+        m_codecAudioContext->channels = av_get_channel_layout_nb_channels(m_codecAudioContext->channel_layout);
+        m_codecAudioContext->sample_fmt = AV_SAMPLE_FMT_S16;
+        m_codecAudioContext->codec_type = AVMEDIA_TYPE_AUDIO;
+        m_codecAudioContext->codec_id = AV_CODEC_ID_AAC;
+        m_codecAudioContext->bit_rate = m_codecAudioContext->sample_rate * m_codecAudioContext->channels * 16; // AV_SAMPLE_FMT_S16
+
+        int ret = avcodec_open2(m_codecAudioContext, aCodec, NULL);
+        if (ret < 0)
+        {
+            LOG_ERROR_MSG("Audio encoder open failed {}.", ret);
+            if (m_codecAudioContext)
+            {
+                avcodec_close(m_codecAudioContext);
+                avcodec_free_context(&m_codecAudioContext);
+                m_codecAudioContext = nullptr;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    bool EncodeCameraStream::initCodecContext(const std::string& outputFile)
     {
         if (not createEncoder())
         {
+            LOG_ERROR_MSG("Create encoder failed.");
             return false;
         }
         if (not initFilter())
         {
+            LOG_ERROR_MSG("Init filter failed.");
             destroyEncoder();
             return false;
         }
+        if (not initVideoCodecContext(outputFile))
+        {
+            LOG_ERROR_MSG("Init video codec context failed.");
+            return false;
+        }
+        if (m_codecAudioContext)
+        {
+            //initAudioCodecContext(outputFile);
+        }
+
+        return true;
+    }
+
+    bool EncodeCameraStream::initVideoCodecContext(const std::string& outputFile)
+    {
         // Allocate an AVFormatContext for an output format.
         // outputFile should use .mp4 .flv etc.
         int ret = avformat_alloc_output_context2(&m_formatContext, NULL, NULL, outputFile.c_str());
@@ -440,9 +513,9 @@ namespace usbVideo
             destroyEncoder();
             return false;
         }
-//        m_stream->id = 0;
-//        m_stream->codecpar->codec_tag = 0;
-        //  Copy the contents of src to dst.
+        // m_stream->id = 0;
+        // m_stream->codecpar->codec_tag = 0;
+        // Copy the contents of src to dst.
         ret = avcodec_parameters_from_context(m_stream->codecpar, m_codecContext);
         if (ret < 0)
         {
@@ -493,15 +566,52 @@ namespace usbVideo
         return true;
     }
 
-    void EncodeCameraStream::runWriteFile()
+    bool EncodeCameraStream::initAudioCodecContext(const std::string& outputFile)
+    {
+        // Allocate an AVFrame and set its fields to default values.
+        m_acc = av_frame_alloc();
+        if (nullptr == m_acc)
+        {
+            LOG_ERROR_MSG("Alloc acc frame failed.");
+            return false;
+        }
+
+        m_acc->format = m_codecAudioContext->sample_fmt; // AV_SAMPLE_FMT_S16
+        m_acc->nb_samples = m_codecAudioContext->frame_size;
+
+        // Allocate new buffer(s) for audio or video data.
+        int accFrameSize = av_samples_get_buffer_size(NULL, m_codecAudioContext->channels, m_codecAudioContext->frame_size,
+            m_codecAudioContext->sample_fmt, alignment);
+        //std::uint8_t* accFrameBuf = static_cast<std::uint8_t*>(av_malloc(accFrameSize));
+        audioBuffer.resize(accFrameSize);
+        LOG_DEBUG_MSG("Audio codec samples frame size {}, acc frame size {}.", m_codecAudioContext->frame_size, accFrameSize);
+        int ret = avcodec_fill_audio_frame(m_acc, m_codecAudioContext->channels, m_codecAudioContext->sample_fmt,
+            &audioBuffer[0], accFrameSize, alignment);
+        if (ret < 0)
+        {
+            LOG_ERROR_MSG("Fill audio acc buffer failed {}", ret);
+            return false;
+        }
+        ret = av_frame_get_buffer(m_acc, alignment);
+        {
+            LOG_ERROR_MSG("Audio frame buffer get failed {}.", ret);
+            //return false;
+        }
+
+        return true;
+    }
+
+    void EncodeCameraStream::prepareFrame()
     {
         keep_running = true;
-        int pts = 0;
+        pts = 0;
+        audioPts = 0;
         rgbBuffer.clear();
         rgbBuffer.resize(videoWidth * videoHeight * RGBCountSize);
+        //audioBuffer.clear();
+        //audioBuffer.resize(8000 * 1 * 16 / 8);
 
-        SwsContext* swsContext{ nullptr };
-        swsContext  = sws_getCachedContext(swsContext,
+        swsContext = sws_getCachedContext(swsContext,
             videoWidth, videoHeight, AV_PIX_FMT_RGB24,
             videoWidth, videoHeight, AV_PIX_FMT_YUV420P,
             SWS_BICUBIC, NULL, NULL, NULL);
@@ -510,125 +620,206 @@ namespace usbVideo
             LOG_ERROR_MSG("create sws context failed.");
             keep_running = false;
         }
+        wateMarkFrame = av_frame_alloc();
+        filterFrame = av_frame_alloc();
+    }
 
-        AVFrame* wateMarkFrame = av_frame_alloc();
-        AVFrame* filterFrame = av_frame_alloc();
-        while (keep_running)
+    void EncodeCameraStream::writeVideoFrame()
+    {
+        /* read data */
+        int64_t data_size = videoWidth * videoHeight * RGBCountSize;
+        size_t readDataSize = 0;
+        int index = 0;
+        //av_frame_unref(m_yuv);
+
+        while (data_size)
         {
-            /* read data */
-            int64_t data_size = videoWidth * videoHeight * RGBCountSize;
-            size_t readDataSize = 0;
-            int index = 0;
-
-            while (data_size)
+            if (index >= rgbBuffer.size())
             {
-                if (index >= rgbBuffer.size())
-                {
-                    break;
-                }
-
-                if (data_size > PIPE_BUF)
-                {
-                    readDataSize = fread(&rgbBuffer[index], 1, PIPE_BUF, m_fd);
-                    if (0 == readDataSize)
-                    {
-                        continue;
-                    }
-                    if (readDataSize < PIPE_BUF)
-                    {
-                        LOG_ERROR_MSG("Error read the data {}, should data {}.", readDataSize, PIPE_BUF);
-                    }
-                }
-                else
-                {
-                    readDataSize = fread(&rgbBuffer[index], 1, data_size, m_fd);
-                    if (readDataSize < data_size)
-                    {
-                        LOG_ERROR_MSG("Error writing the data {}, should data {}.", readDataSize, data_size);
-                    }
-                }
-                index += readDataSize;
-                data_size -= readDataSize;
-            }
-            //LOG_DEBUG_MSG("Success reading the data {}", index);
-
-            uint8_t* indata[AV_NUM_DATA_POINTERS] = { 0 };
-            indata[0] = &rgbBuffer[0];
-
-            int inlinesize[AV_NUM_DATA_POINTERS] = { 0 };
-            inlinesize[0] = videoWidth * RGBCountSize;
-
-            int outputHeight = sws_scale(swsContext,
-                indata, inlinesize,
-                0, videoHeight,
-                m_yuv->data, m_yuv->linesize);
-            if (outputHeight <= 0)
-            {
-                LOG_ERROR_MSG("Scale change failed.");
-                continue;
-            }
-            /* 
-            PTS (Presentation Timestamps)
-            This displays a timestamp that tells the player when to display the frame's data.
-            */
-            m_yuv->pts = pts;
-            //pts = pts + 3600;
-
-            // encode frame
-            std::vector<uint8_t> copyData;
-            copyData.resize(videoWidth * videoHeight);
-            memcpy(&copyData[0], m_yuv->data[0], videoWidth * videoHeight);
-            addWatermarke(copyData);
-
-            av_frame_ref(wateMarkFrame, m_yuv);
-            memcpy(wateMarkFrame->data[0], &copyData[0], videoWidth * videoHeight);
-            wateMarkFrame->pts = pts;
-            pts = pts + 3600; // assessed value to do get actual value
-            //wateMarkFrame->pts = av_frame_get_best_effort_timestamp(m_yuv);
-
-            /* push the decoded frame into the filter graph */
-            if (av_buffersrc_add_frame_flags(m_filterSrcContext, wateMarkFrame, AV_BUFFERSRC_FLAG_KEEP_REF) < 0)
-            {
-                LOG_ERROR_MSG("Error while feeding the filter graph.");
-                av_frame_free(&filterFrame);
-                av_frame_free(&wateMarkFrame);
                 break;
             }
 
-            AVPacket pkt;
-            // Initialize optional fields of a packet with default values.
-            av_init_packet(&pkt);
-
-            // pull filtered frames from the filter graph
-            while (true)
+            if (data_size > PIPE_BUF)
             {
-                int ret = av_buffersink_get_frame(m_filterSinkContext, filterFrame);
-                if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
+                readDataSize = fread(&rgbBuffer[index], 1, PIPE_BUF, m_fd);
+                if (readDataSize != PIPE_BUF)
                 {
-                    //LOG_DEBUG_MSG("Get sink frame the filter graph EOF.");
-                    break;
+                    LOG_ERROR_MSG("Error read the data {}, should data {}.", readDataSize, PIPE_BUF);
+                    rgbBuffer.clear();
+                    return;
                 }
-                else if (ret < 0)
+            }
+            else
+            {
+                readDataSize = fread(&rgbBuffer[index], 1, data_size, m_fd);
+                if (readDataSize != data_size)
                 {
-                    LOG_ERROR_MSG("Get sink frame the filter graph failed {}.", ret);
-                    break;
+                    LOG_ERROR_MSG("Error read the data {}, should data {}.", readDataSize, data_size);
+                    rgbBuffer.clear();
+                    return;
                 }
+            }
+            index += readDataSize;
+            data_size -= readDataSize;
+        }
+       // LOG_DEBUG_MSG("Success read the data {} from video pipe.", index);
 
-                //  Supply a raw video or audio frame to the encoder. Use avcodec_receive_packet() to retrieve buffered output packets.
-                ret = avcodec_send_frame(m_codecContext, filterFrame);
-                if (ret != 0)
+        uint8_t* indata[AV_NUM_DATA_POINTERS] = { 0 };
+        indata[0] = &rgbBuffer[0];
+
+        int inlinesize[AV_NUM_DATA_POINTERS] = { 0 };
+        inlinesize[0] = videoWidth * RGBCountSize;
+
+        int outputHeight = sws_scale(swsContext,
+            indata, inlinesize,
+            0, videoHeight,
+            m_yuv->data, m_yuv->linesize);
+        if (outputHeight <= 0)
+        {
+            LOG_ERROR_MSG("Scale change failed, give up this yuv data.");
+            av_frame_free(&filterFrame);
+            av_frame_free(&wateMarkFrame);
+            return;
+        }
+        /* PTS (Presentation Timestamps)
+        This displays a timestamp that tells the player when to display the frame's data.*/
+        m_yuv->pts = pts;
+
+        // encode frame
+        std::vector<uint8_t> copyData;
+        copyData.resize(videoWidth * videoHeight);
+        memcpy(&copyData[0], m_yuv->data[0], videoWidth * videoHeight);
+        addWatermarke(copyData);
+
+        av_frame_ref(wateMarkFrame, m_yuv);
+        memcpy(wateMarkFrame->data[0], &copyData[0], videoWidth * videoHeight);
+        wateMarkFrame->pts = pts;
+        pts = pts + 3600 * 4; // assessed value to do get actual value
+        //wateMarkFrame->pts = av_frame_get_best_effort_timestamp(m_yuv);
+
+        /* push the decoded frame into the filter graph */
+        if (av_buffersrc_add_frame_flags(m_filterSrcContext, wateMarkFrame, AV_BUFFERSRC_FLAG_KEEP_REF) < 0)
+        {
+            LOG_ERROR_MSG("Error while feeding the filter graph.");
+            av_frame_free(&filterFrame);
+            av_frame_free(&wateMarkFrame);
+            return;
+        }
+
+        AVPacket pkt;
+        // Initialize optional fields of a packet with default values.
+        av_init_packet(&pkt);
+
+        // pull filtered frames from the filter graph
+        while (true)
+        {
+            int ret = av_buffersink_get_frame(m_filterSinkContext, filterFrame);
+            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+            {
+                //LOG_DEBUG_MSG("Get sink frame the filter graph EOF.");
+                break;
+            }
+            else if (ret < 0)
+            {
+                LOG_ERROR_MSG("Get sink frame the filter graph failed {}.", ret);
+                break;
+            }
+
+            //  Supply a raw video or audio frame to the encoder. Use avcodec_receive_packet() to retrieve buffered output packets.
+            ret = avcodec_send_frame(m_codecContext, filterFrame);
+            if (ret != 0)
+            {
+                continue;
+            }
+            // Read encoded data from the encoder.
+            ret = avcodec_receive_packet(m_codecContext, &pkt);
+            if (ret != 0)
+            {
+                continue;
+            }
+            //pts += pkt.size;
+            // Write a packet to an output media file ensuring correct interleaving.
+            av_interleaved_write_frame(m_formatContext, &pkt);
+        }
+        av_packet_unref(&pkt);
+        //LOG_DEBUG_MSG("Success write the data to outputfile {}", index);
+    }
+
+    void EncodeCameraStream::writeAudioFrame()
+    {
+        /* read data */
+        int64_t data_size = audioBuffer.size();
+        size_t readDataSize = 0;
+        int index = 0;
+
+        while (data_size)
+        {
+            if (index >= audioBuffer.size())
+            {
+                break;
+            }
+
+            if (data_size > PIPE_BUF)
+            {
+                //readDataSize = fread(&audioBuffer[index], 1, PIPE_BUF, m_audioFd);
+                readDataSize = read(fdAudio, &audioBuffer[index], PIPE_BUF);
+                if (readDataSize != PIPE_BUF)
                 {
-                    continue;
+                    LOG_ERROR_MSG("Error read the audio data {}, should data {}.", readDataSize, PIPE_BUF);
+                    audioBuffer.clear();
+                    return;
                 }
-                // Read encoded data from the encoder.
-                ret = avcodec_receive_packet(m_codecContext, &pkt);
-                if (ret != 0)
+            }
+            else
+            {
+                //readDataSize = fread(&audioBuffer[index], 1, data_size, m_audioFd);
+                readDataSize = read(fdAudio, &audioBuffer[index], data_size);
+                if (readDataSize != data_size)
                 {
-                    continue;
+                    LOG_ERROR_MSG("Error read the audio data {}, should data {}.", readDataSize, data_size);
+                    audioBuffer.clear();
+                    return;
                 }
-                //pts += pkt.size;
-                // Write a packet to an output media file ensuring correct interleaving.
-                av_interleaved_write_frame(m_formatContext, &pkt);
+            }
+            index += readDataSize;
+            data_size -= readDataSize;
+        }
+       // LOG_DEBUG_MSG("Success read the data {} from audio pipe.", index);
+
+        m_acc->data[0] = &audioBuffer[0];
+        m_acc->pts = audioPts;
+        audioPts += 3600; // assessed value to do get actual value
+
+        AVPacket pkt;
+        // Initialize optional fields of a packet with default values.
+        av_init_packet(&pkt);
+        //  Supply a raw video or audio frame to the encoder. Use avcodec_receive_packet() to retrieve buffered output packets.
+//         int ret = avcodec_send_frame(m_codecAudioContext, m_acc);
+//         if (ret != 0)
+//         {
+//             return;
+//         }
+//         // Read encoded data from the encoder.
+//         ret = avcodec_receive_packet(m_codecAudioContext, &pkt);
+//         if (ret != 0)
+//         {
+//             return;
+//         }
+//         // Write a packet to an output media file ensuring correct interleaving.
+//         av_interleaved_write_frame(m_formatContext, &pkt);
+        av_packet_unref(&pkt);
+    }
+
+    void EncodeCameraStream::runWriteFile()
+    {
+        prepareFrame();
+
+        while (keep_running)
+        {
+            writeVideoFrame();
+            if (m_codecAudioContext)
+            {
+                //writeAudioFrame();
             }
         }
 
@@ -642,12 +833,12 @@ namespace usbVideo
         av_frame_free(&filterFrame);
         av_frame_free(&wateMarkFrame);
         destroyEncoder();
-
         // clear sws context
         if (swsContext)
         {
             sws_freeContext(swsContext);
         }
+        closeFile();
     }
 
     void EncodeCameraStream::flushEncoder()
@@ -659,7 +850,7 @@ namespace usbVideo
         {
             return;
         }
-        while (true) 
+        while (keep_running)
         {
             LOG_DEBUG_MSG("Flushing stream index {}, id {} encoder.", m_stream->index, m_stream->id);
             /*  It can be NULL, in which case it is considered a flush packet.
@@ -675,17 +866,18 @@ namespace usbVideo
             av_init_packet(&pkt);
 
             ret = avcodec_receive_packet(m_codecContext, &pkt);
-            if (ret < 0)
+            if (0 != ret)
             {
                 break;
             }
 
             ret = av_interleaved_write_frame(m_formatContext, &pkt);
-            if (ret < 0)
+            if (0 != ret)
             {
                 break;
             }
         }
+
         return;
     }
 
@@ -696,7 +888,6 @@ namespace usbVideo
         {
             avio_close(m_formatContext->pb);
         }
-
         // Free an AVFormatContext and all its streams.
         if (m_formatContext)
         {
@@ -709,15 +900,27 @@ namespace usbVideo
             // Close a given AVCodecContext and free all the data associated with it (but not the AVCodecContext itself).
             avcodec_close(m_codecContext);
 
-            //  Free the codec context and everything associated with it and write NULL to the provided pointer.
+            // Free the codec context and everything associated with it and write NULL to the provided pointer.
             avcodec_free_context(&m_codecContext);
             m_codecContext = nullptr;
+        }
+        if (m_codecAudioContext)
+        {
+            avcodec_close(m_codecAudioContext);
+            avcodec_free_context(&m_codecAudioContext);
+            m_codecAudioContext = nullptr;
         }
         
         if (m_yuv)
         {
+            av_frame_unref(m_yuv);
             av_frame_free(&m_yuv);
             m_yuv = nullptr;
+        }
+        if (m_acc)
+        {
+            av_frame_free(&m_acc);
+            m_acc = nullptr;
         }
 
         if (m_filterSrcContext)
@@ -737,6 +940,25 @@ namespace usbVideo
             avfilter_graph_free(&m_filterGraph);
             m_filterGraph = nullptr;
         }
+    }
+
+    void EncodeCameraStream::closeFile()
+    {
+        if (m_fd)
+        {
+            fclose(m_fd);
+            m_fd = nullptr;
+        }
+        if (m_audioFd)
+        {
+            fclose(m_audioFd);
+            m_audioFd = nullptr;
+        }
+        if (-1 != fdAudio)
+        {
+            close(fdAudio);
+        }
+        //closeVideoNotify();
     }
 
     void EncodeCameraStream::stopWriteFile()

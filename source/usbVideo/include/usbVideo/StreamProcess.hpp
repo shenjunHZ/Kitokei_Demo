@@ -1,4 +1,6 @@
 #pragma once
+#include <mutex>
+#include <condition_variable>
 #include "Configurations/Configurations.hpp"
 #include "Configurations/ParseConfigFile.hpp"
 #include "logger/Logger.hpp"
@@ -18,8 +20,13 @@ namespace usbVideo
 
     private:
         Logger& m_logger;
+        bool isStreamBusy;
         std::unique_ptr<IEncodeCameraStream> m_EncodeCameraStream;
 
-        std::string m_inputFile{};
+        std::string m_inputVideoFile{};
+        std::string m_inputAudioFile{};
+
+        std::mutex mutexStream;
+        std::condition_variable cv;
     };
 } // namespace Video

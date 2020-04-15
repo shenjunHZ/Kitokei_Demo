@@ -426,15 +426,15 @@ namespace usbAudio
     bool AudioRecordService::audioDataConversion(std::string& data)
     {
         std::string audioFormat = audio::getAudioFormat(m_config);
-        std::vector<unsigned char> converData;
-        int dataSize = data.size();
-        converData.resize(dataSize);
-        
         if ("PCM" == audioFormat)
         {
             return true;
         }
-        else if ("G711a" == audioFormat)
+
+        std::vector<unsigned char> converData;
+        int dataSize = data.size();
+        converData.resize(dataSize);
+        if ("G711a" == audioFormat)
         {
             dataSize = audio::PCM2G711a(&converData[0], data.c_str(), data.size());
             if (dataSize > 0)

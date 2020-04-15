@@ -18,6 +18,9 @@ namespace usbVideo
         bool getCameraFrameFormat(struct v4l2_format& format) override;
         bool getBestCameraFrameFormat(configuration::bestFrameSize& frameSize) override;
 
+        bool getCaptureParm(struct v4l2_streamparm& streamParm) override;
+        bool setCaptureParm(struct v4l2_streamparm& streamParm) override;
+
         int requestMmapBuffers(const struct v4l2_requestbuffers& requestBuffers) override;
         bool startCameraStreaming(const struct v4l2_requestbuffers& requestBuffers) override;
 

@@ -15,6 +15,8 @@ namespace video
 
     std::string getDefaultCameraDevice(const configuration::AppConfiguration& config);
 
+    std::string getDefaultAudioRecord(const configuration::AppConfiguration& config);
+
     bool getEnableCameraStream(const configuration::AppConfiguration& config);
 
     int getV4l2RequestBuffersCounter(const configuration::AppConfiguration& config);

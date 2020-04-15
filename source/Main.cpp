@@ -18,7 +18,7 @@ void runApp(const configuration::AppConfiguration& configParams, const configura
 {
     std::string filePath = getLogFilePath(configParams);
     auto& logger = logger::getLogger(filePath);
-    LOG_INFO_MSG(logger, "Start to run app");
+    LOG_INFO_MSG(logger, "Start to run Kitokei app.");
 
     try 
     {
@@ -28,7 +28,7 @@ void runApp(const configuration::AppConfiguration& configParams, const configura
     }
     catch (const std::exception& e)
     {
-        LOG_ERROR_MSG("app run failed {}", e.what());
+        LOG_ERROR_MSG("Kitokei app run failed {}", e.what());
     }
 }
 

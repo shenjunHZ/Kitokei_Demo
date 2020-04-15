@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <functional>
 
 namespace configuration
 {
@@ -8,14 +9,17 @@ namespace configuration
 
 namespace usbVideo
 {
+    using CloseVideoNotify = std::function<void(void)>;
+
     class IEncodeCameraStream
     {
     public:
         virtual ~IEncodeCameraStream() = default;
         // init av register
-        virtual bool initRegister(const std::string& inputFile, const configuration::bestFrameSize& frameSize) = 0;
+        virtual bool initRegister(const std::string& inputVideoFile, const configuration::bestFrameSize& frameSize, 
+            const std::string& inputAudioFile) = 0;
         // prepare context
-        virtual bool prepareOutputContext(const std::string& outputFile) = 0;
+        virtual bool initCodecContext(const std::string& outputFile) = 0;
         // run write output file
         virtual void runWriteFile() = 0;
         // stop write output file

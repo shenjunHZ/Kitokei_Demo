@@ -63,7 +63,7 @@ namespace endpoints
             return false;
         }
         
-        LOG_INFO_MSG(m_logger, "Create RTP session success, sender is: {}, receiver is: {}.", 
+        LOG_INFO_MSG(m_logger, "Create RTP session success, sender SSRC is: {}, receiver SSRC is: {}.", 
             m_rtpSendSession.GetLocalSSRC(), m_rtpReceiveSession.GetLocalSSRC());
 
         RTPIPv4Address rtpAddr(destIp, rtp::getRTPRemotePort(m_config));

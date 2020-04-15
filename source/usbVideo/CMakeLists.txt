@@ -5,17 +5,19 @@ message(STATUS "Configuring ${MODULE_NAME}")
 
 set(SOURCES
         src/CameraControl.cpp
-        src/CameraProcess.cpp
+        src/CameraService.cpp
         src/CameraImage.cpp
         src/EncodeCameraStream.cpp
         src/StreamProcess.cpp
         src/VideoManagement.cpp
+		src/AudioService.cpp
     )
 
 set(HEADERS
+        include/usbVideo/AudioService.hpp
         include/usbVideo/ICameraControl.hpp
         include/usbVideo/CameraControl.hpp
-        include/usbVideo/CameraProcess.hpp
+        include/usbVideo/CameraService.hpp
         include/usbVideo/CameraImage.hpp
         include/usbVideo/IEncodeCameraStream.hpp
         include/usbVideo/EncodeCameraStream.hpp
@@ -44,6 +46,7 @@ target_link_libraries(${MODULE_NAME}
     PRIVATE
         logger
         timer
+		usbAudio
         avdevice
         avfilter
         avformat

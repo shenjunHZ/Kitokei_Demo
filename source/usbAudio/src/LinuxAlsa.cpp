@@ -213,6 +213,9 @@ namespace usbAudio
             {
                 if (xRunRecovery(alsaAudioContext, rData) < 0)
                 {
+                    LOG_ERROR_MSG("PCM is not in the right state(SND_PCM_STATE_PREPARED or SND_PCM_STATE_RUNNING) {}.", rData);
+                    usleep(200 * 1000);
+
                     return -1;
                 }
             }
@@ -232,7 +235,7 @@ namespace usbAudio
         int ret = -1;
         if (data == -EPIPE)
         {	/* over-run */
-            LOG_WARNING_MSG("overrun happend!");
+            LOG_WARNING_MSG("Audio overrun happend!");
 
             ret = snd_pcm_prepare(handle);
             if (ret < 0)
@@ -245,6 +248,7 @@ namespace usbAudio
         }
         else if (data == -ESTRPIPE)
         {
+            LOG_WARNING_MSG("Suspend event occurred, stream is suspended and waiting for an application recovery.");
             while ((ret = snd_pcm_resume(handle)) == -EAGAIN)
             {
                 LOG_WARNING_MSG("pcm resume wait until the suspend flag is released");
@@ -262,6 +266,7 @@ namespace usbAudio
             }
             return 0;
         }
+
         return ret;
     }
 
