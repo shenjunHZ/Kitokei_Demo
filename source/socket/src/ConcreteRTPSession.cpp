@@ -208,6 +208,7 @@ namespace endpoints
         4.c=：媒体链接信息；IN：网络类型一般为IN；IP4：地址类型一般为IP4；后面是IP地址（注意是VLC所在的IP地址，不是发送方的IP）
         */
         m_rtpSendSession.SetDefaultTimestampIncrement(10);
+        return true;
     }
 
     bool ConcreteRTPSession::startRTPPolling()

@@ -95,10 +95,12 @@ namespace usbAudio
 		}
 
         configuration::WAVEFORMATEX wavfmt = {
-            static_cast<unsigned short>(waveFormatTag), audioChannel, sampleRate,
+            static_cast<unsigned short>(waveFormatTag),
+            audioChannel,
+            sampleRate,
             static_cast<unsigned int>(sampleRate * audioChannel * audio::getSampleBit(m_config) / BitsByte),
             static_cast<unsigned short>(audioChannel* audio::getSampleBit(m_config) / BitsByte),
-			audio::getSampleBit(m_config),
+            static_cast<unsigned short>(audio::getSampleBit(m_config)),
             0 };
             //static_cast<unsigned short>(sizeof(configuration::WAVEFORMATEX)) };
         m_sysRec = std::make_unique<LinuxAlsa>(m_logger, std::make_unique<configuration::WAVEFORMATEX>(wavfmt));

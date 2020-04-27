@@ -34,10 +34,13 @@ endif()
 if(${ARM})
     INCLUDE_DIRECTORIES(
         "/usr/local/include"
+        "/usr/local/include/spdlog/include"
+		"/usr/local/ffmpeg/include"
     )
 
     LINK_DIRECTORIES(
         "/usr/local/lib"
+		"/usr/local/ffmpeg/lib"
     )
 
     #boost library

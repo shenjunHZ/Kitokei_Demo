@@ -3,8 +3,8 @@
       {
         "name": "linux-release",
         "generator": "Unix Makefiles",
-        //"configurationType": "RelWithDebInfo",
-        "configurationType": "Debug",
+        "configurationType": "RelWithDebInfo",
+        //"configurationType": "Debug",
         "variables": [
           {
             "name": "CMAKE_CXX_COMPILER",
@@ -18,12 +18,12 @@
           }
         ],
         "remoteMachineName": "ipqwcwt.zicp.vip",
-        "remoteCMakeListsRoot": "/home/khadas/development/remoteBuildRoot/Kitokei_Demo/${name}",
-        "cmakeExecutable": "/usr/local/bin/cmake",
+        "remoteCMakeListsRoot": "/home/khadas/development/remoteBuildRoot/Kitokei_Demo",
+        "cmakeExecutable": "/usr/bin/cmake",
         "remoteBuildRoot": "/home/khadas/development/remoteBuildRoot/Kitokei_Demo/build/${name}",
         "remoteInstallRoot": "/home/khadas/development/remoteBuildRoot/Kitokei_Demo/install/${name}",
-        "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\remoteBuildRoot\\Kitokei_Demo\\build\\${name}",
-        "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\remoteBuildRoot\\Kitokei_Demo\\install\\${name}",
+        "buildRoot": "${projectDir}\\${workspaceHash}\\CMakeBuilds\\remoteBuildRoot\\Kitokei_Demo\\build\\${name}",
+        "installRoot": "${projectDir}\\${workspaceHash}\\CMakeBuilds\\remoteBuildRoot\\Kitokei_Demo\\install\\${name}",
         "remoteCopySources": true,
         "remoteCopySourcesOutputVerbosity": "Normal",
         "remoteCopySourcesConcurrentCopies": "10",
