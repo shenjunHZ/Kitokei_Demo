@@ -298,7 +298,7 @@ namespace usbVideo
         if ( (ret = avfilter_graph_parse_ptr(m_filterGraph, filtersDescr.c_str(),
             &inputs, &outputs, NULL)) < 0 )
         {
-            LOG_ERROR_MSG("avfilter_graph_parse_ptr failed {}, no filter description.", ret);
+            LOG_ERROR_MSG("avfilter_graph_parse_ptr failed {}, no filter description {}.", ret, filtersDescr.c_str());
         }
 
         if ( (ret = avfilter_graph_config(m_filterGraph, NULL)) < 0 )
