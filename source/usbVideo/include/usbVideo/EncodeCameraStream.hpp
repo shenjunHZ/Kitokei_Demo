@@ -69,7 +69,7 @@ namespace usbVideo
         AVFilterContext* m_filterSrcContext{ nullptr };
         AVFilterContext* m_filterSinkContext{ nullptr };
 
-        SwsContext* swsContext{ nullptr };
+        SwsContext* swsContext_{ nullptr };
         AVFrame* wateMarkFrame{ nullptr };
         AVFrame* filterFrame{nullptr};
 

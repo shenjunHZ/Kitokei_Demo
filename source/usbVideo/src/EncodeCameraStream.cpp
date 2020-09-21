@@ -610,11 +610,11 @@ namespace usbVideo
         //audioBuffer.clear();
         //audioBuffer.resize(8000 * 1 * 16 / 8);
 
-        swsContext = sws_getCachedContext(swsContext,
+        swsContext_ = sws_getCachedContext(swsContext_,
             videoWidth, videoHeight, AV_PIX_FMT_RGB24,
             videoWidth, videoHeight, AV_PIX_FMT_YUV420P,
             SWS_BICUBIC, NULL, NULL, NULL);
-        if (not swsContext)
+        if (not swsContext_)
         {
             LOG_ERROR_MSG("create sws context failed.");
             keep_running = false;
@@ -669,7 +669,7 @@ namespace usbVideo
         int inlinesize[AV_NUM_DATA_POINTERS] = { 0 };
         inlinesize[0] = videoWidth * RGBCountSize;
 
-        int outputHeight = sws_scale(swsContext,
+        int outputHeight = sws_scale(swsContext_,
             indata, inlinesize,
             0, videoHeight,
             m_yuv->data, m_yuv->linesize);
@@ -832,9 +832,10 @@ namespace usbVideo
         av_frame_free(&wateMarkFrame);
         destroyEncoder();
         // clear sws context
-        if (swsContext)
+        if (swsContext_)
         {
-            sws_freeContext(swsContext);
+            sws_freeContext(swsContext_);
+            swsContext_ = nullptr;
         }
     }
 
