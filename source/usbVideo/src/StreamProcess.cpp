@@ -40,7 +40,7 @@ namespace usbVideo
             LOG_ERROR_MSG("Init codec context failed.");
             return;
         }
-        LOG_DEBUG_MSG("Start write video stream to files.");
+        LOG_DEBUG_MSG("Start write video stream to files: {}.", outputFile);
         m_EncodeCameraStream->runWriteFile();
     }
 

@@ -562,7 +562,6 @@ namespace usbVideo
             destroyEncoder();
             return false;
         }
-
         return true;
     }
 
@@ -813,7 +812,6 @@ namespace usbVideo
     void EncodeCameraStream::runWriteFile()
     {
         prepareFrame();
-
         while (keep_running)
         {
             writeVideoFrame();
@@ -838,7 +836,6 @@ namespace usbVideo
         {
             sws_freeContext(swsContext);
         }
-        closeFile();
     }
 
     void EncodeCameraStream::flushEncoder()

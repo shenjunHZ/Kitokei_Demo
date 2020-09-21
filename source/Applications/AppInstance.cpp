@@ -34,6 +34,11 @@ namespace application
     AppInstance::~AppInstance()
     {
         usbVideo::CameraService::stopRun();
+        if (m_cameraProcessThread.joinable())
+        {
+            m_cameraProcessThread.join();
+        }
+
         if (m_audioRecordService)
         {
             m_audioRecordService->exitAudioRecord();
@@ -41,11 +46,6 @@ namespace application
         if (m_audioPlayabckService)
         {
             m_audioPlayabckService->exitAudioPlayback();
-        }
-
-        if (m_cameraProcessThread.joinable())
-        {
-            m_cameraProcessThread.join();
         }
     }
 
