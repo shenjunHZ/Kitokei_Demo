@@ -38,5 +38,5 @@ target_link_libraries(${MODULE_NAME}
     PRIVATE
         logger
         timer
-        -ljrtp
+        libjrtp.a
     )
